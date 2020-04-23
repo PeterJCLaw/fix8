@@ -71,7 +71,7 @@ flake_output = subprocess.run(
 ).stdout
 
 missing_commas = [
-    x.split(':')
+    x.split(':', maxsplit=3)
     for x in flake_output.decode('utf-8').splitlines()
 ]
 
