@@ -80,6 +80,11 @@ def fix_E302(code_line: CodeLine) -> str:
     return "\n" + code_line.text
 
 
+@fixer  # the backslash is redundant between brackets
+def fix_E502(code_line: CodeLine) -> str:
+    return remove_character_at(code_line.text, code_line.col, '\\')
+
+
 flake_output = subprocess.run(
     ['flake8'] + sys.argv[1:],
     stdout=subprocess.PIPE,
