@@ -108,5 +108,5 @@ for filepath, positions in itertools.groupby(missing_commas, lambda x: x[0]):
             lines[lineno] = fixer_fn(CodeLine(lines[lineno], lineno, col))
 
         f.seek(0)
-        f.write(''.join(lines))
+        f.write(''.join(x.rstrip() + '\n' for x in lines))
         f.truncate()
