@@ -55,6 +55,11 @@ def fix_C812(code_line: CodeLine) -> str:
     return insert_character_at(code_line.text, code_line.col, ',')
 
 
+@fixer  # Multiple spaces after operator
+def fix_E222(code_line: CodeLine) -> str:
+    return ensure_single_space_at(code_line.text, code_line.col)
+
+
 @fixer  # Missing whitespace around operator
 def fix_E225(code_line: CodeLine) -> str:
     return insert_character_at(code_line.text, code_line.col, ' ')
