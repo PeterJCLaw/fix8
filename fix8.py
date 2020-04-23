@@ -91,12 +91,12 @@ flake_output = subprocess.run(
     stderr=subprocess.STDOUT,
 ).stdout
 
-missing_commas = [
+error_details = [
     x.split(':', maxsplit=3)
     for x in flake_output.decode('utf-8').splitlines()
 ]
 
-for filepath, positions in itertools.groupby(missing_commas, lambda x: x[0]):
+for filepath, positions in itertools.groupby(error_details, lambda x: x[0]):
     with open(filepath, mode='r+') as f:
         lines = f.readlines()
 
