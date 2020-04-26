@@ -114,6 +114,7 @@ def process_errors(error_details: Iterable[Sequence[str]]) -> None:
         with open(filepath, mode='r+') as f:
             lines = f.readlines()
 
+            modified = False
             for _, lineno_str, col_str, message in positions:
                 code = message.split()[0]
 
@@ -124,13 +125,19 @@ def process_errors(error_details: Iterable[Sequence[str]]) -> None:
                 lineno = int(lineno_str) - 1
                 col = int(col_str) - 1
 
-                lines[lineno] = fixer_fn(CodeLine(lines[lineno], lineno, col))
+                new_line = fixer_fn(CodeLine(lines[lineno], lineno, col))
+                if new_line == lines[lineno]:
+                    continue
 
-            new_content = ''.join(x.rstrip() + '\n' for x in lines)
+                lines[lineno] = new_line
+                modified = True
 
-            f.seek(0)
-            f.write(new_content)
-            f.truncate()
+            if modified:
+                new_content = ''.join(x.rstrip() + '\n' for x in lines)
+
+                f.seek(0)
+                f.write(new_content)
+                f.truncate()
 
 
 def main(args: argparse.Namespace) -> None:
