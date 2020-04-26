@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import argparse
 import itertools
 import re
 import subprocess
@@ -130,11 +131,17 @@ def process_errors(error_details: Iterable[Sequence[str]]) -> None:
             f.truncate()
 
 
-def main(args: List[str]) -> None:
-    error_details = run_flake8(args)
+def main(args: argparse.Namespace) -> None:
+    error_details = run_flake8(args.flake8_args)
 
     process_errors(error_details)
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('flake8_args', metavar='FLAKE8_ARG', nargs='+')
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    main(parse_args())
