@@ -7,3 +7,7 @@ flake8-isort
 flake8-mutable
 flake8-todo
 flake8-tuple
+
+# Need 2.2 for fixes around typing comments
+# flake8 3.7.9 claims to be incompatible with pyflakes 2.2, however it actually works fine.
+pyflakes>=2.2
