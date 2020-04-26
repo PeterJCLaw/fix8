@@ -4,7 +4,15 @@ import itertools
 import re
 import subprocess
 import sys
-from typing import Callable, Dict, NamedTuple, TypeVar
+from typing import (
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    NamedTuple,
+    Sequence,
+    TypeVar,
+)
 
 FIXER_REGEX = re.compile(r'^fix_([A-Z]\d{3})$')
 
@@ -85,33 +93,48 @@ def fix_E502(code_line: CodeLine) -> str:
     return remove_character_at(code_line.text, code_line.col, '\\')
 
 
-flake_output = subprocess.run(
-    ['flake8'] + sys.argv[1:],
-    stdout=subprocess.PIPE,
-    stderr=subprocess.STDOUT,
-).stdout
+def run_flake8(args: List[str]) -> List[List[str]]:
+    flake_output = subprocess.run(
+        ['flake8'] + args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    ).stdout
 
-error_details = [
-    x.split(':', maxsplit=3)
-    for x in flake_output.decode('utf-8').splitlines()
-]
+    error_details = [
+        x.split(':', maxsplit=3)
+        for x in flake_output.decode('utf-8').splitlines()
+    ]
 
-for filepath, positions in itertools.groupby(error_details, lambda x: x[0]):
-    with open(filepath, mode='r+') as f:
-        lines = f.readlines()
+    return error_details
 
-        for _, lineno_str, col_str, message in positions:
-            code = message.split()[0]
 
-            fixer_fn = FIXERS.get(code)
-            if not fixer_fn:
-                continue
+def process_errors(error_details: Iterable[Sequence[str]]) -> None:
+    for filepath, positions in itertools.groupby(error_details, lambda x: x[0]):
+        with open(filepath, mode='r+') as f:
+            lines = f.readlines()
 
-            lineno = int(lineno_str) - 1
-            col = int(col_str) - 1
+            for _, lineno_str, col_str, message in positions:
+                code = message.split()[0]
 
-            lines[lineno] = fixer_fn(CodeLine(lines[lineno], lineno, col))
+                fixer_fn = FIXERS.get(code)
+                if not fixer_fn:
+                    continue
 
-        f.seek(0)
-        f.write(''.join(x.rstrip() + '\n' for x in lines))
-        f.truncate()
+                lineno = int(lineno_str) - 1
+                col = int(col_str) - 1
+
+                lines[lineno] = fixer_fn(CodeLine(lines[lineno], lineno, col))
+
+            f.seek(0)
+            f.write(''.join(x.rstrip() + '\n' for x in lines))
+            f.truncate()
+
+
+def main(args: List[str]) -> None:
+    error_details = run_flake8(args)
+
+    process_errors(error_details)
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
