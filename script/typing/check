@@ -1,0 +1,5 @@
+#!/bin/bash
+if [ -z "$MYPY" ]; then
+    MYPY=mypy
+fi
+exec "$MYPY" fix8.py setup.py
