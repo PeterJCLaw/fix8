@@ -104,6 +104,10 @@ def fix_E502(code_line: CodeLine) -> str:
     return remove_character_at(code_line.text, code_line.col, '\\')
 
 
+def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
+    return content
+
+
 def parse_flake8_output(flake8_output: bytes) -> Dict[Path, List[ErrorDetail]]:
     """
     Parse output from Flake8 formatted using FLAKE8_FORMAT into a useful form.
@@ -156,6 +160,11 @@ def process_errors(messages: List[ErrorDetail], content: str) -> str:
 
     if modified:
         content = ''.join(x.rstrip() + '\n' for x in lines)
+
+    # TODO: generalise support for other whole-file fixes
+    f401_messages = [x for x in messages if x.code == 'F401']
+    if f401_messages:
+        content = fix_F401(f401_messages, content)
 
     return content
 
