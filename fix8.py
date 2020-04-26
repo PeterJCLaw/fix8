@@ -6,13 +6,11 @@ import functools
 import itertools
 import re
 import subprocess
-import sys
 import token
 from pathlib import Path
 from typing import (
     Callable,
     Dict,
-    Iterable,
     List,
     NamedTuple,
     Sequence,
