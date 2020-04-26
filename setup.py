@@ -32,5 +32,8 @@ setup(
         'Topic :: Software Development :: Quality Assurance',
         'Topic :: Utilities',
     ],
+    install_requires=[
+        'asttokens',
+    ],
     zip_safe=True,
 )
