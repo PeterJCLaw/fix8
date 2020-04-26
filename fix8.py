@@ -126,8 +126,10 @@ def process_errors(error_details: Iterable[Sequence[str]]) -> None:
 
                 lines[lineno] = fixer_fn(CodeLine(lines[lineno], lineno, col))
 
+            new_content = ''.join(x.rstrip() + '\n' for x in lines)
+
             f.seek(0)
-            f.write(''.join(x.rstrip() + '\n' for x in lines))
+            f.write(new_content)
             f.truncate()
 
 
