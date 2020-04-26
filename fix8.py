@@ -121,10 +121,10 @@ def parse_flake8_output(flake8_output: bytes) -> Dict[Path, List[ErrorDetail]]:
 
     error_details = {}
     for filepath, messages in grouped_lines:
-        error_details[Path(filepath)] = [
+        error_details[Path(filepath)] = sorted(
             ErrorDetail(line=int(line), col=int(col), code=code, message=message)
             for (_, line, col, code, message) in messages
-        ]
+        )
 
     return error_details
 
