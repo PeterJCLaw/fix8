@@ -5,6 +5,7 @@ import itertools
 import re
 import subprocess
 import sys
+from pathlib import Path
 from typing import (
     Callable,
     Dict,
@@ -16,6 +17,15 @@ from typing import (
 )
 
 FIXER_REGEX = re.compile(r'^fix_([A-Z]\d{3})$')
+
+FLAKE8_FORMAT = '%(path)s:%(row)d:%(col)d:%(code)s:%(text)s'
+
+ErrorDetail = NamedTuple('ErrorDetail', (
+    ('line', int),
+    ('col', int),
+    ('code', str),
+    ('message', str),
+))
 
 CodeLine = NamedTuple('CodeLine', (
     ('text', str),
@@ -94,56 +104,74 @@ def fix_E502(code_line: CodeLine) -> str:
     return remove_character_at(code_line.text, code_line.col, '\\')
 
 
-def run_flake8(args: List[str]) -> List[List[str]]:
-    flake_output = subprocess.run(
-        ['flake8'] + args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    ).stdout
-
-    error_details = [
-        x.split(':', maxsplit=3)
-        for x in flake_output.decode('utf-8').splitlines()
+def parse_flake8_output(flake8_output: bytes) -> Dict[Path, List[ErrorDetail]]:
+    """
+    Parse output from Flake8 formatted using FLAKE8_FORMAT into a useful form.
+    """
+    lines = [
+        x.split(':', maxsplit=4)
+        for x in sorted(flake8_output.decode('utf-8').splitlines())
     ]
+
+    grouped_lines = itertools.groupby(lines, lambda x: x[0])
+
+    error_details = {}
+    for filepath, messages in grouped_lines:
+        error_details[Path(filepath)] = [
+            ErrorDetail(line=int(line), col=int(col), code=code, message=message)
+            for (_, line, col, code, message) in messages
+        ]
 
     return error_details
 
 
-def process_errors(error_details: Iterable[Sequence[str]]) -> None:
-    for filepath, positions in itertools.groupby(error_details, lambda x: x[0]):
-        with open(filepath, mode='r+') as f:
-            lines = f.readlines()
+def run_flake8(args: List[str]) -> Dict[Path, List[ErrorDetail]]:
+    flake8_result = subprocess.run(
+        ['flake8'] + args + ['--format', FLAKE8_FORMAT],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
 
-            modified = False
-            for _, lineno_str, col_str, message in positions:
-                code = message.split()[0]
+    return parse_flake8_output(flake8_result.stdout)
 
-                fixer_fn = FIXERS.get(code)
-                if not fixer_fn:
-                    continue
 
-                lineno = int(lineno_str) - 1
-                col = int(col_str) - 1
+def process_errors(messages: List[ErrorDetail], content: str) -> str:
+    lines = content.splitlines()
+    modified = False
 
-                new_line = fixer_fn(CodeLine(lines[lineno], lineno, col))
-                if new_line == lines[lineno]:
-                    continue
+    for message in messages:
+        fixer_fn = FIXERS.get(message.code)
+        if not fixer_fn:
+            continue
 
-                lines[lineno] = new_line
-                modified = True
+        # Convert to 0-based
+        lineno = message.line - 1
 
-            if modified:
-                new_content = ''.join(x.rstrip() + '\n' for x in lines)
+        new_line = fixer_fn(CodeLine(lines[lineno], lineno, message.col))
+        if new_line == lines[lineno]:
+            continue
 
-                f.seek(0)
-                f.write(new_content)
-                f.truncate()
+        lines[lineno] = new_line
+        modified = True
+
+    if modified:
+        content = ''.join(x.rstrip() + '\n' for x in lines)
+
+    return content
 
 
 def main(args: argparse.Namespace) -> None:
-    error_details = run_flake8(args.flake8_args)
+    all_error_details = run_flake8(args.flake8_args)
 
-    process_errors(error_details)
+    for filepath, error_details in all_error_details.items():
+        with filepath.open(mode='r+') as f:
+            content = f.read()
+            new_content = process_errors(error_details, content)
+
+            if new_content != content:
+                f.seek(0)
+                f.write(new_content)
+                f.truncate()
 
 
 def parse_args() -> argparse.Namespace:
