@@ -187,32 +187,36 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
 
     spans_to_remove = []
 
-    for message in messages:
-        match = message_regex.search(message.message)
-        if match is None:
-            raise ValueError("Unable to extract import name from message {!r}".format(
-                message.message,
-            ))
+    for lineno, grouped in itertools.groupby(messages, lambda x: x.line):
+        node = module.get_leaf_for_position((lineno, 1)).parent
+        line_messages = list(grouped)
 
-        import_name = match.group(1).split('.')
-        import_as_name = match.group(3)
-
-        node = module.get_leaf_for_position((message.line, message.col)).parent
-
-        if import_name[:node.level] != [''] * node.level:
-            raise ValueError("Source level is shallower than message")
-
-        if import_name[node.level] == ['']:
-            raise ValueError("Source level is deeper than message")
-
-        import_name = import_name[node.level:]
-
-        found_path = find_path(node, import_name, import_as_name)
-
-        if len(node.get_paths()) == 1:
+        if len(node.get_paths()) == len(line_messages):
             start_pos = get_start_pos(node)
             end_pos = node.end_pos
-        else:
+            spans_to_remove.append((start_pos, end_pos))
+            continue
+
+        for message in line_messages:
+            match = message_regex.search(message.message)
+            if match is None:
+                raise ValueError("Unable to extract import name from message {!r}".format(
+                    message.message,
+                ))
+
+            import_name = match.group(1).split('.')
+            import_as_name = match.group(3)
+
+            if import_name[:node.level] != [''] * node.level:
+                raise ValueError("Source level is shallower than message")
+
+            if import_name[node.level] == ['']:
+                raise ValueError("Source level is deeper than message")
+
+            import_name = import_name[node.level:]
+
+            found_path = find_path(node, import_name, import_as_name)
+
             last_part = found_path[-1]
             if last_part.parent.parent == node:
                 # We're removing something like `bar as spam` from
@@ -242,7 +246,7 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
                 if on_same_line(prev_leaf, last_part) and prev_leaf.type == 'operator':
                     start_pos = get_start_pos(prev_leaf)
 
-        spans_to_remove.append((start_pos, end_pos))
+            spans_to_remove.append((start_pos, end_pos))
 
     # TODO: validate no overlaps
     lines = content.splitlines(True)
