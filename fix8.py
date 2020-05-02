@@ -12,9 +12,11 @@ from typing import (
     Dict,
     List,
     NamedTuple,
+    Optional,
     Sequence,
     Tuple,
     TypeVar,
+    Union,
 )
 
 import parso  # type: ignore[import]
@@ -153,8 +155,23 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
             return leaf.get_start_pos_of_prefix()  # type: ignore[no-any-return]
         return leaf.start_pos  # type: ignore[no-any-return]
 
-    def find_path(node: tree.Import, import_name: List[str]) -> tree.Name:
-        for path in node.get_paths():
+    def find_path(
+        node: Union[tree.ImportFrom, tree.ImportName],
+        import_name: List[str],
+        import_as_name: Optional[str],
+    ) -> tree.Name:
+        for path, as_name in zip(node.get_paths(), node.get_defined_names()):
+            if import_as_name is None:
+                # Not expecting a rename
+                if as_name not in path:
+                    # But was a rename
+                    continue
+            else:
+                # Expecting a rename
+                if as_name in path:
+                    # But wasn't a rename
+                    continue
+
             if all(
                 name_str == name_node.get_code(include_prefix=False)
                 for name_node, name_str in zip(path, import_name)
@@ -190,7 +207,7 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
 
         import_name = import_name[node.level:]
 
-        found_path = find_path(node, import_name)
+        found_path = find_path(node, import_name, import_as_name)
 
         if len(node.get_paths()) == 1:
             start_pos = get_start_pos(node)
@@ -198,11 +215,13 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
         else:
             last_part = found_path[-1]
             if last_part.parent.parent == node:
-                # TODO: I think there's a case where this can happen (`import foo, foo as bar`)
+                # We're removing something like `bar as spam` from
+                #   from foo import bar as spam, quox
                 assert not import_as_name, "Expected renamed import, but didn't find it"
                 node_to_remove = last_part
             else:
-                # TODO: I think there's a case where this can happen (`import foo as bar, foo`)
+                # We're removing something like `quox` from
+                #   from foo import bar as spam, quox
                 assert import_as_name, "Did not expect renamed import, but found one"
                 node_to_remove = last_part.parent
 
