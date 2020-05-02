@@ -315,13 +315,12 @@ def parse_flake8_output(flake8_output: str) -> Dict[Path, List[ErrorDetail]]:
 
 def run_flake8(args: List[str]) -> Dict[Path, List[ErrorDetail]]:
     output = io.StringIO()
-    stdout, stderr = sys.stdout, sys.stderr
-
-    sys.stdout = sys.stderr = output
+    stdout = sys.stdout
+    sys.stdout = output
 
     Flake8().run(args + ['--format', FLAKE8_FORMAT])
 
-    sys.stdout, sys.stderr = stdout, stderr
+    sys.stdout = stdout
 
     return parse_flake8_output(output.getvalue())
 
