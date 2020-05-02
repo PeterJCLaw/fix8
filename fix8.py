@@ -150,8 +150,9 @@ def fix_E502(code_line: CodeLine) -> str:
 def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
     module = parso.parse(content).get_root_node()
 
-    def get_start_pos(leaf: parso.tree.NodeOrLeaf) -> Tuple[int, int]:
-        if isinstance(leaf, parso.tree.Leaf) and leaf.prefix.isspace():
+    def get_start_pos(node_or_leaf: parso.tree.NodeOrLeaf) -> Tuple[int, int]:
+        leaf = node_or_leaf.get_first_leaf()
+        if leaf.prefix.isspace():
             return leaf.get_start_pos_of_prefix()  # type: ignore[no-any-return]
         return leaf.start_pos  # type: ignore[no-any-return]
 
