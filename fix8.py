@@ -163,6 +163,9 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
 
         raise ValueError("Failed to find matching path for {}".format(import_name))
 
+    def on_same_line(a: parso.tree.BaseNode, b: parso.tree.BaseNode) -> bool:
+        return a.start_pos[0] == b.start_pos[0]  # type: ignore[no-any-return]
+
     message_regex = re.compile(r"^'([\w\.]+)(\s+as\s+([\w\.]+))?'")
 
     spans_to_remove = []
@@ -208,8 +211,17 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
             next_leaf = node_to_remove.get_next_leaf()
             if next_leaf.type == 'operator':
                 end_pos = next_leaf.end_pos
+
+                prev_leaf = last_part.get_previous_leaf()
+                if on_same_line(prev_leaf, last_part) and prev_leaf.type == 'operator':
+                    start_pos = prev_leaf.end_pos
+
             else:
                 end_pos = node_to_remove.end_pos
+
+                prev_leaf = last_part.get_previous_leaf()
+                if on_same_line(prev_leaf, last_part) and prev_leaf.type == 'operator':
+                    start_pos = get_start_pos(prev_leaf)
 
         spans_to_remove.append((start_pos, end_pos))
 
