@@ -13,6 +13,7 @@ from typing import (
     Dict,
     List,
     NamedTuple,
+    Optional,
     Sequence,
     Tuple,
     Type,
@@ -309,9 +310,13 @@ def parse_flake8_output(flake8_output: bytes) -> Dict[Path, List[ErrorDetail]]:
     return error_details
 
 
-def run_flake8(args: List[str]) -> Dict[Path, List[ErrorDetail]]:
+def run_flake8(
+    args: List[str],
+    _input: Optional[bytes] = None,
+) -> Dict[Path, List[ErrorDetail]]:
     flake8_result = subprocess.run(
         ['flake8'] + args + ['--format', FLAKE8_FORMAT],
+        input=_input,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
