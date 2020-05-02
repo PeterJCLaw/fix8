@@ -38,6 +38,14 @@ class TestFixesF401(BaseFixesTestCast):
             '\n',
         )
 
+    def test_absolute_multiple_imports(self) -> None:
+        self.assertFixes(
+            '''
+            import os, sys
+            ''',
+            '\n',
+        )
+
     def test_absolute_first_import_in_multi(self) -> None:
         self.assertFixes(
             '''
@@ -91,6 +99,14 @@ class TestFixesF401(BaseFixesTestCast):
         )
 
     def test_absolute_single_from_import(self) -> None:
+        self.assertFixes(
+            '''
+            from os import path
+            ''',
+            '\n',
+        )
+
+    def test_absolute_multiple_from_imports(self) -> None:
         self.assertFixes(
             '''
             from os import path
@@ -195,6 +211,14 @@ class TestFixesF401(BaseFixesTestCast):
             '\n',
         )
 
+    def test_relative_module_multiple_imports(self) -> None:
+        self.assertFixes(
+            '''
+            from . import os, sys
+            ''',
+            '\n',
+        )
+
     def test_relative_module_first_import_in_multi(self) -> None:
         self.assertFixes(
             '''
@@ -275,6 +299,17 @@ class TestFixesF401(BaseFixesTestCast):
             from .os.path import dirname
             dirname(__file__)
             ''',
+        )
+
+    def test_relative_module_multiple_imports_wrapped(self) -> None:
+        self.assertFixes(
+            '''
+            from . import (
+                os,
+                sys,
+            )
+            ''',
+            '\n',
         )
 
     def test_relative_first_name_in_wrappped_from_import(self) -> None:
