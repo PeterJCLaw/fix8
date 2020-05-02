@@ -365,7 +365,7 @@ def main(args: argparse.Namespace) -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument('flake8_args', metavar='FLAKE8_ARG', nargs='+')
+    parser.add_argument('flake8_args', metavar='FLAKE8_ARG', nargs='*')
     return parser.parse_args()
 
 
