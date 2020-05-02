@@ -351,6 +351,54 @@ class TestFixesF401(BaseFixesTestCast):
             ''',
         )
 
+    def test_renamed_duplicate_original_used_when_as_first(self) -> None:
+        self.assertFixes(
+            '''
+            from foo import bar as spam, bar
+            bar()
+            ''',
+            '''
+            from foo import bar
+            bar()
+            ''',
+        )
+
+    def test_renamed_duplicate_rename_used_when_as_first(self) -> None:
+        self.assertFixes(
+            '''
+            from foo import bar as spam, bar
+            spam()
+            ''',
+            '''
+            from foo import bar as spam
+            spam()
+            ''',
+        )
+
+    def test_renamed_duplicate_original_used_when_as_second(self) -> None:
+        self.assertFixes(
+            '''
+            from foo import bar, bar as spam
+            bar()
+            ''',
+            '''
+            from foo import bar
+            bar()
+            ''',
+        )
+
+    def test_renamed_duplicate_rename_used_when_as_second(self) -> None:
+        self.assertFixes(
+            '''
+            from foo import bar, bar as spam
+            spam()
+            ''',
+            '''
+            from foo import bar as spam
+            spam()
+            ''',
+        )
+
 
 if __name__ == '__main__':
     unittest.main(__name__)
