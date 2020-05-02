@@ -3,9 +3,10 @@
 import argparse
 import ast
 import functools
+import io
 import itertools
 import re
-import subprocess
+import sys
 import token
 from pathlib import Path
 from typing import (
@@ -13,7 +14,6 @@ from typing import (
     Dict,
     List,
     NamedTuple,
-    Optional,
     Sequence,
     Tuple,
     Type,
@@ -22,6 +22,9 @@ from typing import (
 
 import asttokens.util  # type: ignore[import]
 from asttokens import ASTTokens
+from flake8.main.application import (  # type: ignore[import]
+    Application as Flake8,
+)
 
 FIXER_REGEX = re.compile(r'^fix_([A-Z]\d{3})$')
 
@@ -289,13 +292,13 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
     return content
 
 
-def parse_flake8_output(flake8_output: bytes) -> Dict[Path, List[ErrorDetail]]:
+def parse_flake8_output(flake8_output: str) -> Dict[Path, List[ErrorDetail]]:
     """
     Parse output from Flake8 formatted using FLAKE8_FORMAT into a useful form.
     """
     lines = [
         x.split(':', maxsplit=4)
-        for x in sorted(flake8_output.decode('utf-8').splitlines())
+        for x in sorted(flake8_output.splitlines())
     ]
 
     grouped_lines = itertools.groupby(lines, lambda x: x[0])
@@ -310,18 +313,17 @@ def parse_flake8_output(flake8_output: bytes) -> Dict[Path, List[ErrorDetail]]:
     return error_details
 
 
-def run_flake8(
-    args: List[str],
-    _input: Optional[bytes] = None,
-) -> Dict[Path, List[ErrorDetail]]:
-    flake8_result = subprocess.run(
-        ['flake8'] + args + ['--format', FLAKE8_FORMAT],
-        input=_input,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    )
+def run_flake8(args: List[str]) -> Dict[Path, List[ErrorDetail]]:
+    output = io.StringIO()
+    stdout, stderr = sys.stdout, sys.stderr
 
-    return parse_flake8_output(flake8_result.stdout)
+    sys.stdout = sys.stderr = output
+
+    Flake8().run(args + ['--format', FLAKE8_FORMAT])
+
+    sys.stdout, sys.stderr = stdout, stderr
+
+    return parse_flake8_output(output.getvalue())
 
 
 def process_errors(messages: List[ErrorDetail], content: str) -> str:

@@ -3,6 +3,7 @@
 import textwrap
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import fix8
 
@@ -19,7 +20,9 @@ class BaseFixesTestCast(unittest.TestCase):
         content = textwrap.dedent(content[1:])
         expected_output = textwrap.dedent(expected_output[1:])
 
-        parsed_errors = fix8.run_flake8(['-'], _input=content.encode())
+        with mock.patch('flake8.utils.stdin_get_value', return_value=content):
+            parsed_errors = fix8.run_flake8(['-'])
+
         error_details = parsed_errors[Path('stdin')]
         new_content = fix8.process_errors(error_details, content)
 
