@@ -35,7 +35,7 @@ class TestFixesF401(BaseFixesTestCast):
             '''
             import os
             ''',
-            '\n\n',
+            '\n',
         )
 
     def test_absolute_first_import_in_multi(self) -> None:
@@ -95,7 +95,7 @@ class TestFixesF401(BaseFixesTestCast):
             '''
             from os import path
             ''',
-            '\n\n',
+            '\n',
         )
 
     def test_absolute_first_name_in_from_import(self) -> None:
@@ -192,7 +192,7 @@ class TestFixesF401(BaseFixesTestCast):
             '''
             from . import os
             ''',
-            '\n\n',
+            '\n',
         )
 
     def test_relative_module_first_import_in_multi(self) -> None:
@@ -238,7 +238,7 @@ class TestFixesF401(BaseFixesTestCast):
             '''
             from .os import path
             ''',
-            '\n\n',
+            '\n',
         )
 
     def test_relative_first_name_in_from_import(self) -> None:

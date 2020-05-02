@@ -228,7 +228,9 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
         before, interim, after = \
             lines[:start_line], lines[start_line:end_line], lines[end_line:]
 
-        interim = [interim[0][:start_col] + interim[-1][end_col:]]
+        line = interim[0][:start_col] + interim[-1][end_col:]
+
+        interim = [] if line.isspace() else [line]
 
         lines = before + interim + after
 
