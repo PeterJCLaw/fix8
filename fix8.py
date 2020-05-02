@@ -197,20 +197,19 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
             if last_part.parent.parent == node:
                 # TODO: I think there's a case where this can happen (`import foo, foo as bar`)
                 assert not import_as_name, "Expected renamed import, but didn't find it"
-                start_pos = get_start_pos(last_part)
-
-                next_leaf = last_part.get_next_leaf()
-                if next_leaf.type == 'operator':
-                    end_pos = next_leaf.end_pos
-                else:
-                    end_pos = last_part.end_pos
-
+                node_to_remove = last_part
             else:
                 # TODO: I think there's a case where this can happen (`import foo as bar, foo`)
                 assert import_as_name, "Did not expect renamed import, but found one"
+                node_to_remove = last_part.parent
 
-                start_pos = get_start_pos(last_part.parent)
-                end_pos = last_part.parent.end_pos
+            start_pos = get_start_pos(node_to_remove)
+
+            next_leaf = node_to_remove.get_next_leaf()
+            if next_leaf.type == 'operator':
+                end_pos = next_leaf.end_pos
+            else:
+                end_pos = node_to_remove.end_pos
 
         spans_to_remove.append((start_pos, end_pos))
 
