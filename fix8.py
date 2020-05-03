@@ -344,6 +344,7 @@ def main(args: argparse.Namespace) -> None:
             new_content = process_errors(error_details, content)
 
             if new_content != content:
+                print("Fixing {}".format(filepath))
                 f.seek(0)
                 f.write(new_content)
                 f.truncate()
