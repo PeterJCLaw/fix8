@@ -23,6 +23,7 @@ import parso  # type: ignore[import]
 from flake8.main.application import (  # type: ignore[import]
     Application as Flake8,
 )
+from flake8.style_guide import Decision
 from parso.python import tree  # type: ignore[import]
 
 FIXER_REGEX = re.compile(r'^fix_([A-Z]\d{3})$')
@@ -298,7 +299,18 @@ def run_flake8(args: List[str]) -> Dict[Path, List[ErrorDetail]]:
     stdout = sys.stdout
     sys.stdout = output
 
-    Flake8().run(args + ['--format', FLAKE8_FORMAT])
+    flake8 = Flake8()
+    flake8.initialize(args + ['--format', FLAKE8_FORMAT])
+
+    # Only run for the checks we can do anything about:
+    decider = flake8.guide.decider
+    flake8.options.select = [
+        code
+        for code in FIXERS.keys()
+        if decider.decision_for(code) == Decision.Selected
+    ]
+    flake8.run_checks()
+    flake8.report()
 
     sys.stdout = stdout
 
