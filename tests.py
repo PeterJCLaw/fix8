@@ -167,6 +167,18 @@ class TestFixesF401(BaseFixesTestCast):
             ''',
         )
 
+    def test_absolute_first_and_last_in_from_import(self) -> None:
+        self.assertFixes(
+            '''
+            from os.path import basename, dirname, realpath
+            dirname(__file__)
+            ''',
+            '''
+            from os.path import dirname
+            dirname(__file__)
+            ''',
+        )
+
     def test_absolute_first_name_in_wrappped_from_import(self) -> None:
         self.assertFixes(
             '''
