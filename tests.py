@@ -150,6 +150,23 @@ class TestFixesF401(BaseFixesTestCast):
             ''',
         )
 
+    def test_absolute_last_two_in_from_import(self) -> None:
+        # Not ideal, though it's likely the user is going to run `isort` or
+        # similar anyway, so not terrible either. The main purpose of this test
+        # is to validate that we don't do soemthing terrible with the source
+        # (such as pulling the following statement up onto the import line)
+        # rather than to check the actual import behaviour
+        self.assertFixes(
+            '''
+            from os.path import dirname, basename, realpath
+            dirname(__file__)
+            ''',
+            '''
+            from os.path import dirname,
+            dirname(__file__)
+            ''',
+        )
+
     def test_absolute_first_name_in_wrappped_from_import(self) -> None:
         self.assertFixes(
             '''
