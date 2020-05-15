@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import argparse
-import functools
 import io
 import itertools
 import re
