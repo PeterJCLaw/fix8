@@ -52,40 +52,6 @@ TFixer = TypeVar('TFixer', bound=Fixer)
 FIXERS = {}  # type: Dict[str, Fixer]
 
 
-@functools.total_ordering
-class Position:
-    """
-    A position within a document, compatible with Python AST positions.
-
-    Line numbers are one-based, columns are zero-based.
-    """
-
-    def __init__(self, line: int, col: int) -> None:
-        self.line = line
-        self.col = col
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Position):
-            return NotImplemented
-
-        return self.line == other.line and self.col == other.col
-
-    def __lt__(self, other: 'Position') -> bool:
-        if not isinstance(other, Position):
-            return NotImplemented  # type: ignore  # unreachable
-
-        if self.line < other.line:
-            return True
-
-        if self.line > other.line:
-            return False
-
-        return self.col < other.col
-
-    def __repr__(self) -> str:
-        return 'Position(line={}, col={})'.format(self.line, self.col)
-
-
 def insert_character_at(text: str, col: int, char: str) -> str:
     return text[:col] + char + text[col:]
 
