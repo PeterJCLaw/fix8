@@ -90,18 +90,6 @@ def insert_character_at(text: str, col: int, char: str) -> str:
     return text[:col] + char + text[col:]
 
 
-def remove_character_at(text: str, col: int, char: str) -> str:
-    assert text[col] == char
-    return text[:col] + text[col + 1:]
-
-
-def ensure_single_space_at(text: str, col: int) -> str:
-    while text[col] == ' ':
-        text = remove_character_at(text, col, ' ')
-
-    return insert_character_at(text, col, ' ')
-
-
 def fixer(fn: TFixer) -> TFixer:
     match = FIXER_REGEX.match(fn.__name__)
     if match is None:
@@ -116,36 +104,6 @@ def fixer(fn: TFixer) -> TFixer:
 @fixer  # Missing trailing comma
 def fix_C812(code_line: CodeLine) -> str:
     return insert_character_at(code_line.text, code_line.col, ',')
-
-
-@fixer  # Multiple spaces after operator
-def fix_E222(code_line: CodeLine) -> str:
-    return ensure_single_space_at(code_line.text, code_line.col)
-
-
-@fixer  # Missing whitespace around operator
-def fix_E225(code_line: CodeLine) -> str:
-    return insert_character_at(code_line.text, code_line.col, ' ')
-
-
-@fixer  # inline comment should start with '# '
-def fix_E262(code_line: CodeLine) -> str:
-    text, _, col = code_line
-
-    # Actually insert at the next column
-    col += 1
-
-    return ensure_single_space_at(text, col)
-
-
-@fixer  # expected 2 blank lines, found 1
-def fix_E302(code_line: CodeLine) -> str:
-    return "\n" + code_line.text
-
-
-@fixer  # the backslash is redundant between brackets
-def fix_E502(code_line: CodeLine) -> str:
-    return remove_character_at(code_line.text, code_line.col, '\\')
 
 
 def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
