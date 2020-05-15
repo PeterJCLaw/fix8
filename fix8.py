@@ -44,6 +44,7 @@ CodeLine = NamedTuple('CodeLine', (
 ))
 
 Position = Tuple[int, int]
+Span = Tuple[Position, Position]
 
 # TODO: currently we return the new string, we should move to instead returning
 # a description of the edit.
@@ -51,6 +52,26 @@ Fixer = Callable[[CodeLine], str]
 TFixer = TypeVar('TFixer', bound=Fixer)
 
 FIXERS = {}  # type: Dict[str, Fixer]
+
+
+def merge_overlapping_spans(spans: Sequence[Span]) -> List[Span]:
+    if not spans:
+        return []
+
+    spans = sorted(spans)
+
+    output_spans = [spans[0]]
+
+    for span in spans[1:]:
+        last_start, last_end = output_spans[-1]
+        start, end = span
+
+        if start <= last_end:
+            output_spans[-1] = last_start, max(last_end, end)
+        else:
+            output_spans.append(span)
+
+    return output_spans
 
 
 def insert_character_at(text: str, col: int, char: str) -> str:
@@ -112,7 +133,7 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
 
     message_regex = re.compile(r"^'([\w\.]+)(\s+as\s+([\w\.]+))?'")
 
-    spans_to_remove = []
+    spans_to_remove = []  # type: List[Span]
 
     for lineno, grouped in itertools.groupby(messages, lambda x: x.line):
         node = module.get_leaf_for_position((lineno, 1)).parent
@@ -174,6 +195,8 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
                     start_pos = get_start_pos(prev_leaf)
 
             spans_to_remove.append((start_pos, end_pos))
+
+    spans_to_remove = merge_overlapping_spans(spans_to_remove)
 
     # TODO: validate no overlaps
     lines = content.splitlines(True)

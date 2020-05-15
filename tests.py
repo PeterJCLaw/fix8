@@ -435,5 +435,114 @@ class TestFixesF401(BaseFixesTestCast):
         )
 
 
+class TestMergeSpans(unittest.TestCase):
+    def test_separate(self) -> None:
+        spans = [
+            ((1, 1), (2, 1)),
+            ((3, 1), (4, 1)),
+            ((5, 1), (6, 1)),
+        ]
+
+        expected_output = spans.copy()
+
+        self.assertEqual(expected_output, fix8.merge_overlapping_spans(spans))
+
+    def test_first_two_overlap(self) -> None:
+        spans = [
+            ((1, 1), (2, 10)),
+            ((2, 1), (4, 1)),
+            ((5, 1), (6, 1)),
+        ]
+
+        expected_output = [
+            ((1, 1), (4, 1)),
+            ((5, 1), (6, 1)),
+        ]
+
+        self.assertEqual(expected_output, fix8.merge_overlapping_spans(spans))
+
+    def test_last_two_overlap(self) -> None:
+        spans = [
+            ((1, 1), (2, 1)),
+            ((3, 1), (5, 5)),
+            ((5, 1), (6, 1)),
+        ]
+
+        expected_output = [
+            ((1, 1), (2, 1)),
+            ((3, 1), (6, 1)),
+        ]
+
+        self.assertEqual(expected_output, fix8.merge_overlapping_spans(spans))
+
+    def test_first_completely_overlaps_second(self) -> None:
+        spans = [
+            ((1, 1), (2, 10)),
+            ((2, 1), (2, 5)),
+            ((5, 1), (6, 1)),
+        ]
+
+        expected_output = [
+            ((1, 1), (2, 10)),
+            ((5, 1), (6, 1)),
+        ]
+
+        self.assertEqual(expected_output, fix8.merge_overlapping_spans(spans))
+
+    def test_first_and_last_overlap(self) -> None:
+        spans = [
+            ((2, 1), (4, 1)),
+            ((5, 1), (6, 1)),
+            ((1, 1), (2, 10)),
+        ]
+
+        expected_output = [
+            ((1, 1), (4, 1)),
+            ((5, 1), (6, 1)),
+        ]
+
+        self.assertEqual(expected_output, fix8.merge_overlapping_spans(spans))
+
+    def test_last_overlaps_with_all_others(self) -> None:
+        spans = [
+            ((1, 1), (2, 10)),
+            ((3, 1), (4, 1)),
+            ((2, 1), (6, 1)),
+        ]
+
+        expected_output = [
+            ((1, 1), (6, 1)),
+        ]
+
+        self.assertEqual(expected_output, fix8.merge_overlapping_spans(spans))
+
+    def test_overlap_three_of_four(self) -> None:
+        spans = [
+            ((1, 1), (2, 10)),
+            ((1, 1), (4, 1)),
+            ((1, 1), (6, 1)),
+            ((6, 1), (10, 1)),
+        ]
+
+        expected_output = [
+            ((1, 1), (10, 1)),
+        ]
+
+        self.assertEqual(expected_output, fix8.merge_overlapping_spans(spans))
+
+    def test_all_overlap(self) -> None:
+        spans = [
+            ((1, 1), (2, 10)),
+            ((1, 1), (3, 1)),
+            ((2, 1), (6, 1)),
+        ]
+
+        expected_output = [
+            ((1, 1), (6, 1)),
+        ]
+
+        self.assertEqual(expected_output, fix8.merge_overlapping_spans(spans))
+
+
 if __name__ == '__main__':
     unittest.main(__name__)
