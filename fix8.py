@@ -93,6 +93,26 @@ def fix_C812(code_line: CodeLine) -> str:
     return insert_character_at(code_line.text, code_line.col, ',')
 
 
+@fixer  # Missing trailing comma
+def fix_C813(code_line: CodeLine) -> str:
+    return insert_character_at(code_line.text, code_line.col, ',')
+
+
+@fixer  # Missing trailing comma
+def fix_C814(code_line: CodeLine) -> str:
+    return insert_character_at(code_line.text, code_line.col, ',')
+
+
+@fixer  # Missing trailing comma
+def fix_C815(code_line: CodeLine) -> str:
+    return insert_character_at(code_line.text, code_line.col, ',')
+
+
+@fixer  # Missing trailing comma
+def fix_C816(code_line: CodeLine) -> str:
+    return insert_character_at(code_line.text, code_line.col, ',')
+
+
 def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
     module = parso.parse(content).get_root_node()
 
