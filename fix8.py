@@ -126,7 +126,7 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
         node: Union[tree.ImportFrom, tree.ImportName],
         import_name: List[str],
         import_as_name: Optional[str],
-    ) -> tree.Name:
+    ) -> List[tree.Name]:
         for path, as_name in zip(node.get_paths(), node.get_defined_names()):
             if import_as_name is None:
                 # Not expecting a rename
@@ -143,11 +143,11 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
                 name_str == name_node.get_code(include_prefix=False)
                 for name_node, name_str in zip(path, import_name)
             ):
-                return path
+                return path  # type: ignore[no-any-return]
 
         raise ValueError("Failed to find matching path for {}".format(import_name))
 
-    def on_same_line(a: parso.tree.BaseNode, b: parso.tree.BaseNode) -> bool:
+    def on_same_line(a: parso.tree.NodeOrLeaf, b: parso.tree.NodeOrLeaf) -> bool:
         return a.start_pos[0] == b.start_pos[0]  # type: ignore[no-any-return]
 
     message_regex = re.compile(r"^'([\w\.]+)(\s+as\s+([\w\.]+))?'")
@@ -185,6 +185,7 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
             found_path = find_path(node, import_name, import_as_name)
 
             last_part = found_path[-1]
+            assert last_part.parent is not None  # placate mypy
             if last_part.parent.parent == node:
                 # We're removing something like `bar as spam` from
                 #   from foo import bar as spam, quox
