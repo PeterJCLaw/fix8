@@ -1,0 +1,14 @@
+#!/bin/bash -e
+
+TAG=$(git describe --tags --exact-match)
+VERSION=$(python setup.py --version)
+
+test "$TAG" == "v$VERSION"
+
+echo "Building $TAG"
+
+python setup.py sdist bdist_wheel
+
+echo "Uploading $TAG"
+
+twine upload dist/*

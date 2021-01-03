@@ -1,0 +1,5 @@
+# Recent setuptools to ensure that markdown README handling works
+setuptools>=36.4
+
+twine
+wheel
