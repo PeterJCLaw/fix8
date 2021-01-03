@@ -30,7 +30,7 @@ If you have a large project you may want to wrap it, something like this:
 
 ``` bash
 fix8-local() {
-    git diff --name-only --diff-filter=d | grep --color=auto '\.py$' | sort --unique | xargs --no-run-if-empty fix8
+    git diff --name-only --diff-filter=d | grep '\.py$' | sort --unique | xargs --no-run-if-empty fix8
 }
 ```
 
@@ -39,7 +39,7 @@ This can be paired with `isort` to do both fixes with a single command:
 ``` bash
 # Put these functions in your `.bashrc` or similar
 run-py-local() {
-    git diff --name-only --diff-filter=d | grep --color=auto '\.py$' | sort --unique | xargs --no-run-if-empty "$@"
+    git diff --name-only --diff-filter=d | grep '\.py$' | sort --unique | xargs --no-run-if-empty "$@"
 }
 
 fix8-local() {
