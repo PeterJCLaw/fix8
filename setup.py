@@ -17,6 +17,9 @@ setup(
     description="Automatic fix for Python linting issues found by Flake8",
     long_description=long_description,
     long_description_content_type='text/markdown',
+    entry_points={
+        'console_scripts': ['fix8 = fix8:main'],
+    },
     author="Peter Law",
     author_email='PeterJCLaw@gmail.com',
     classifiers=[

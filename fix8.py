@@ -315,7 +315,7 @@ def process_errors(messages: List[ErrorDetail], content: str) -> str:
     return content
 
 
-def main(args: argparse.Namespace) -> None:
+def run(args: argparse.Namespace) -> None:
     all_error_details = run_flake8(args.flake8_args)
 
     for filepath, error_details in all_error_details.items():
@@ -330,11 +330,15 @@ def main(args: argparse.Namespace) -> None:
                 f.truncate()
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: List[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('flake8_args', metavar='FLAKE8_ARG', nargs='*')
-    return parser.parse_args()
+    return parser.parse_args(argv)
+
+
+def main(argv: List[str] = sys.argv[1:]) -> None:
+    return run(parse_args(argv))
 
 
 if __name__ == '__main__':
-    main(parse_args())
+    main()
