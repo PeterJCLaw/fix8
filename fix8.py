@@ -22,7 +22,7 @@ import parso
 from flake8.main.application import (  # type: ignore[import]
     Application as Flake8,
 )
-from flake8.style_guide import Decision
+from flake8.style_guide import Decision  # type: ignore[import]
 from parso.python import tree
 
 FIXER_REGEX = re.compile(r'^fix_([A-Z]\d{3})$')
