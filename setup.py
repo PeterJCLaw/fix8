@@ -33,7 +33,7 @@ setup(
         'Topic :: Utilities',
     ],
     install_requires=[
-        'asttokens',
+        'parso',
     ],
     zip_safe=True,
 )
