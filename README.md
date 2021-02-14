@@ -15,6 +15,11 @@ Automatic fix for Python linting issues found by [Flake8](https://flake8.pycqa.o
 pip install fix8
 ```
 
+## Configuration
+
+Fix8 will only fix issues that flake8 finds, so your existing flake8 configuration
+(including which plugins you have installed) will determine what gets fixed.
+
 ## Usage
 
 `fix8` wraps `flake8`, so takes the same arguments. The easist way to use it is
