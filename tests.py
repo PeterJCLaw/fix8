@@ -463,6 +463,20 @@ class TestFixesF401(BaseFixesTestCast):
             ''',
         )
 
+    def test_indented_import(self) -> None:
+        self.assertFixes(
+            '''
+            def circular():
+                from foo import bar, bar as spam
+                spam()
+            ''',
+            '''
+            def circular():
+                from foo import bar as spam
+                spam()
+            ''',
+        )
+
 
 class TestMergeSpans(unittest.TestCase):
     def test_separate(self) -> None:

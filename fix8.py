@@ -155,8 +155,10 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
     spans_to_remove = []  # type: List[Span]
 
     for lineno, grouped in itertools.groupby(messages, lambda x: x.line):
-        node = module.get_leaf_for_position((lineno, 1)).parent
         line_messages = list(grouped)
+
+        col = min(x.col for x in line_messages)
+        node = module.get_leaf_for_position((lineno, col)).parent
 
         if len(node.get_paths()) == len(line_messages):
             start_pos = get_start_pos(node)
