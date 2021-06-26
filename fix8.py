@@ -200,21 +200,20 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
                 node_to_remove = last_part.parent
 
             start_pos = get_start_pos(node_to_remove)
+            end_pos = node_to_remove.end_pos
 
-            next_leaf = node_to_remove.get_next_leaf()
-            if next_leaf.type == 'operator':
-                end_pos = next_leaf.end_pos
-
-                prev_leaf = last_part.get_previous_leaf()
-                if on_same_line(prev_leaf, last_part) and prev_leaf.type == 'operator':
-                    start_pos = prev_leaf.end_pos
-
-            else:
+            # Look for commas to remove. We prefer to remove a preceding comma,
+            # though only if it's on the same line. If there isn't a preceding
+            # comma on the same line we remove any trailing comma.
+            prev_leaf = last_part.get_previous_leaf()
+            if on_same_line(prev_leaf, last_part) and prev_leaf.type == 'operator':
+                start_pos = get_start_pos(prev_leaf)
                 end_pos = node_to_remove.end_pos
 
-                prev_leaf = last_part.get_previous_leaf()
-                if on_same_line(prev_leaf, last_part) and prev_leaf.type == 'operator':
-                    start_pos = get_start_pos(prev_leaf)
+            else:
+                next_leaf = node_to_remove.get_next_leaf()
+                if next_leaf.type == 'operator':
+                    end_pos = next_leaf.end_pos
 
             spans_to_remove.append((start_pos, end_pos))
 
