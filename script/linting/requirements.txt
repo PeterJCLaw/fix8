@@ -9,6 +9,4 @@ flake8-mutable
 flake8-todo
 flake8-tuple
 
-# Ensure consistent version of isort while we still support Python 3.5
-# (isort >= 5 only supports Python 3.6+)
-isort<5
+isort

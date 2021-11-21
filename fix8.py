@@ -148,7 +148,7 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
         raise ValueError("Failed to find matching path for {}".format(import_name))
 
     def on_same_line(a: parso.tree.NodeOrLeaf, b: parso.tree.NodeOrLeaf) -> bool:
-        return a.start_pos[0] == b.start_pos[0]  # type: ignore[no-any-return]
+        return a.start_pos[0] == b.start_pos[0]
 
     message_regex = re.compile(r"^'([\w\.]+)(\s+as\s+([\w\.]+))?'")
 
@@ -192,7 +192,7 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
                 # We're removing something like `bar as spam` from
                 #   from foo import bar as spam, quox
                 assert not import_as_name, "Expected renamed import, but didn't find it"
-                node_to_remove = last_part
+                node_to_remove: parso.tree.NodeOrLeaf = last_part
             else:
                 # We're removing something like `quox` from
                 #   from foo import bar as spam, quox
