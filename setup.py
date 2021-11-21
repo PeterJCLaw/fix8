@@ -26,23 +26,18 @@ setup(
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3 :: Only',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Software Development :: Quality Assurance',
         'Topic :: Utilities',
     ],
+    python_requires='>=3.7',
     install_requires=[
         'flake8 < 4',
-
-        # Temporarily pin an older version for type check consistency. We're
-        # actually compatible with 0.8 as far as I can tell, so once we drop
-        # Python 3.5 support this constraint can be relaxed.
-        'parso < 0.8',
+        'parso',
     ],
     zip_safe=True,
 )
