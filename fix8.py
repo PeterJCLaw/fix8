@@ -207,7 +207,6 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
             prev_leaf = last_part.get_previous_leaf()
             if on_same_line(prev_leaf, last_part) and prev_leaf.type == 'operator':
                 start_pos = get_start_pos(prev_leaf)
-                end_pos = node_to_remove.end_pos
 
             else:
                 next_leaf = node_to_remove.get_next_leaf()
