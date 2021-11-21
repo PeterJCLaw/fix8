@@ -36,7 +36,7 @@ setup(
     ],
     python_requires='>=3.7',
     install_requires=[
-        'flake8 < 4',
+        'flake8',
         'parso',
     ],
     zip_safe=True,

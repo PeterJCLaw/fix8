@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import contextlib
 import io
 import itertools
 import re
@@ -264,26 +265,31 @@ def parse_flake8_output(flake8_output: str) -> Dict[Path, List[ErrorDetail]]:
 
 
 def run_flake8(args: List[str]) -> Dict[Path, List[ErrorDetail]]:
-    output = io.StringIO()
-    stdout = sys.stdout
-    sys.stdout = output
+    # Flake8 v4 assumes stdout is a buffered output and sometimes writes
+    # directly to the buffer.
+    buffer = io.BytesIO()
+    with contextlib.redirect_stdout(io.TextIOWrapper(buffer)) as wrapper:
+        flake8 = Flake8()
+        flake8.initialize(args + ['--format', FLAKE8_FORMAT])
 
-    flake8 = Flake8()
-    flake8.initialize(args + ['--format', FLAKE8_FORMAT])
+        # Only run for the checks we can do anything about:
+        decider = flake8.guide.decider
+        flake8.options.select = [
+            code
+            for code in FIXERS.keys()
+            if decider.decision_for(code) == Decision.Selected
+        ]
+        flake8.run_checks()
+        flake8.report()
 
-    # Only run for the checks we can do anything about:
-    decider = flake8.guide.decider
-    flake8.options.select = [
-        code
-        for code in FIXERS.keys()
-        if decider.decision_for(code) == Decision.Selected
-    ]
-    flake8.run_checks()
-    flake8.report()
+        # Flush the wrapper to the buffer. This is needed for Flake8 v3 which
+        # writes to the wrapper not the buffer.
+        wrapper.flush()
+        # Note: the wrapper will close our buffer when it gets closed, so need to
+        # get the value while it's still alive.
+        output = buffer.getvalue().decode()
 
-    sys.stdout = stdout
-
-    return parse_flake8_output(output.getvalue())
+    return parse_flake8_output(output)
 
 
 def process_errors(messages: List[ErrorDetail], content: str) -> str:
