@@ -30,18 +30,19 @@ FIXER_REGEX = re.compile(r'^fix_([A-Z]\d{3})$')
 
 FLAKE8_FORMAT = '%(path)s:%(row)d:%(col)d:%(code)s:%(text)s'
 
-ErrorDetail = NamedTuple('ErrorDetail', (
-    ('line', int),
-    ('col', int),
-    ('code', str),
-    ('message', str),
-))
 
-CodeLine = NamedTuple('CodeLine', (
-    ('text', str),
-    ('line', int),
-    ('col', int),
-))
+class ErrorDetail(NamedTuple):
+    line: int
+    col: int
+    code: str
+    message: str
+
+
+class CodeLine(NamedTuple):
+    text: str
+    line: int
+    col: int
+
 
 Position = Tuple[int, int]
 Span = Tuple[Position, Position]
