@@ -79,6 +79,13 @@ def insert_character_at(text: str, col: int, char: str) -> str:
     return text[:col] + char + text[col:]
 
 
+def remove_character_at(text: str, col: int, char: str) -> str:
+    # to 0-index
+    col -= 1
+    assert text[col] == char, f"{text[col]} != {char}"
+    return text[:col] + text[col + 1:]
+
+
 def fixer(fn: TFixer) -> TFixer:
     match = FIXER_REGEX.match(fn.__name__)
     if match is None:
@@ -113,6 +120,12 @@ def fix_C815(code_line: CodeLine) -> str:
 @fixer  # Missing trailing comma
 def fix_C816(code_line: CodeLine) -> str:
     return insert_character_at(code_line.text, code_line.col, ',')
+
+
+@fixer  # Trailing comma prohibited
+def fix_C819(code_line: CodeLine) -> str:
+    # flake8-commas seems to give the wrong column position, so -1
+    return remove_character_at(code_line.text, code_line.col - 1, ',')
 
 
 def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:

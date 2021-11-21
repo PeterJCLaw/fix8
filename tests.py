@@ -29,6 +29,18 @@ class BaseFixesTestCast(unittest.TestCase):
         self.assertEqual(expected_output, new_content, message)
 
 
+class TestFixesC819(BaseFixesTestCast):
+    def test_removes_trailing_comma_in_call(self) -> None:
+        self.assertFixes(
+            '''
+            foo(bar,)
+            ''',
+            '''
+            foo(bar)
+            ''',
+        )
+
+
 class TestFixesF401(BaseFixesTestCast):
     maxDiff = 8000
 
