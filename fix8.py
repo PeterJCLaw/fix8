@@ -153,41 +153,39 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
 
     message_regex = re.compile(r"^'([\w\.]+)(\s+as\s+([\w\.]+))?'")
 
-    spans_to_remove = []  # type: List[Span]
+    def get_part_to_remove(
+        detail: ErrorDetail,
+        node: Union[tree.ImportFrom, tree.ImportName],
+    ) -> Tuple[tree.Name, str]:
+        match = message_regex.search(detail.message)
+        if match is None:
+            raise ValueError("Unable to extract import name from message {!r}".format(
+                detail.message,
+            ))
 
-    for lineno, grouped in itertools.groupby(messages, lambda x: x.line):
-        line_messages = list(grouped)
+        import_name = match.group(1).split('.')
+        import_as_name = match.group(3)
 
-        col = min(x.col for x in line_messages)
-        node = module.get_leaf_for_position((lineno, col)).parent
+        if import_name[:node.level] != [''] * node.level:
+            raise ValueError("Source level is shallower than message")
 
-        if len(node.get_paths()) == len(line_messages):
-            start_pos = get_start_pos(node)
-            end_pos = node.end_pos
-            spans_to_remove.append((start_pos, end_pos))
-            continue
+        if import_name[node.level] == ['']:
+            raise ValueError("Source level is deeper than message")
+
+        import_name = import_name[node.level:]
+
+        found_path = find_path(node, import_name, import_as_name)
+        return found_path[-1], import_as_name
+
+    def get_parts_to_remove(
+        line_messages: Sequence[ErrorDetail],
+        node: Union[tree.ImportFrom, tree.ImportName],
+    ) -> List[Span]:
+        spans_to_remove: List[Span] = []
 
         for message in line_messages:
-            match = message_regex.search(message.message)
-            if match is None:
-                raise ValueError("Unable to extract import name from message {!r}".format(
-                    message.message,
-                ))
+            last_part, import_as_name = get_part_to_remove(message, node)
 
-            import_name = match.group(1).split('.')
-            import_as_name = match.group(3)
-
-            if import_name[:node.level] != [''] * node.level:
-                raise ValueError("Source level is shallower than message")
-
-            if import_name[node.level] == ['']:
-                raise ValueError("Source level is deeper than message")
-
-            import_name = import_name[node.level:]
-
-            found_path = find_path(node, import_name, import_as_name)
-
-            last_part = found_path[-1]
             assert last_part.parent is not None  # placate mypy
             if last_part.parent.parent == node:
                 # We're removing something like `bar as spam` from
@@ -217,6 +215,24 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
                     end_pos = next_leaf.end_pos
 
             spans_to_remove.append((start_pos, end_pos))
+
+        return spans_to_remove
+
+    spans_to_remove = []  # type: List[Span]
+
+    for lineno, grouped in itertools.groupby(messages, lambda x: x.line):
+        line_messages = list(grouped)
+
+        col = min(x.col for x in line_messages)
+        node = module.get_leaf_for_position((lineno, col)).parent
+
+        if len(node.get_paths()) == len(line_messages):
+            start_pos = get_start_pos(node)
+            end_pos = node.end_pos
+            spans_to_remove.append((start_pos, end_pos))
+            continue
+
+        spans_to_remove += get_parts_to_remove(line_messages, node)
 
     spans_to_remove = merge_overlapping_spans(spans_to_remove)
 
