@@ -1,5 +1,5 @@
 # Need 3.8 for fixes around typing comments
-flake8>=3.8
+flake8>=3.8,<4
 flake8-builtins
 flake8-commas
 flake8-comprehensions
