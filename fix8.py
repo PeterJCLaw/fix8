@@ -177,6 +177,23 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
         found_path = find_path(node, import_name, import_as_name)
         return found_path[-1], import_as_name
 
+    def get_node_to_remove(
+        name: tree.Name,
+        import_as_name: Optional[str],
+        node: Union[tree.ImportFrom, tree.ImportName],
+    ) -> parso.tree.NodeOrLeaf:
+        assert name.parent is not None  # placate mypy
+        if name.parent.parent == node:
+            # We're removing something like `bar as spam` from
+            #   from foo import bar as spam, quox
+            assert not import_as_name, "Expected renamed import, but didn't find it"
+            return name
+
+        # We're removing something like `quox` from
+        #   from foo import bar as spam, quox
+        assert import_as_name, "Did not expect renamed import, but found one"
+        return name.parent
+
     def get_parts_to_remove(
         line_messages: Sequence[ErrorDetail],
         node: Union[tree.ImportFrom, tree.ImportName],
@@ -185,18 +202,7 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
 
         for message in line_messages:
             last_part, import_as_name = get_part_to_remove(message, node)
-
-            assert last_part.parent is not None  # placate mypy
-            if last_part.parent.parent == node:
-                # We're removing something like `bar as spam` from
-                #   from foo import bar as spam, quox
-                assert not import_as_name, "Expected renamed import, but didn't find it"
-                node_to_remove: parso.tree.NodeOrLeaf = last_part
-            else:
-                # We're removing something like `quox` from
-                #   from foo import bar as spam, quox
-                assert import_as_name, "Did not expect renamed import, but found one"
-                node_to_remove = last_part.parent
+            node_to_remove = get_node_to_remove(last_part, import_as_name, node)
 
             start_pos = get_start_pos(node_to_remove)
             end_pos = node_to_remove.end_pos
