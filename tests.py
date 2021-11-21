@@ -30,6 +30,8 @@ class BaseFixesTestCast(unittest.TestCase):
 
 
 class TestFixesF401(BaseFixesTestCast):
+    maxDiff = 8000
+
     def test_absolute_single_import(self) -> None:
         self.assertFixes(
             '''
@@ -150,6 +152,18 @@ class TestFixesF401(BaseFixesTestCast):
             ''',
         )
 
+    def test_absolute_first_two_in_from_import(self) -> None:
+        self.assertFixes(
+            '''
+            from os.path import basename, realpath, dirname
+            dirname(__file__)
+            ''',
+            '''
+            from os.path import dirname
+            dirname(__file__)
+            ''',
+        )
+
     def test_absolute_last_two_in_from_import(self) -> None:
         self.assertFixes(
             '''
@@ -171,6 +185,46 @@ class TestFixesF401(BaseFixesTestCast):
             '''
             from os.path import dirname
             dirname(__file__)
+            ''',
+        )
+
+    def test_absolute_from_kitchen_sink(self) -> None:
+        self.assertFixes(
+            '''
+            from inside import UnusedI1, I1, I2, UnusedI2
+            from left import L1, UnusedL1, L2, UnusedL2
+            from right import UnusedR1, R1, UnusedR2, R2
+            from outside import O1, UnusedO1, UnusedO2, O2
+            from mixed_out import MO1, UnusedMO1, MO2, UnusedMO2, MO3
+            from mixed_in import UnusedMI1, MI1, UnusedMI2, MI2, UnusedMI3
+
+            from double_inside import UnusedDI0, UnusedDI1, DI1, DI2, UnusedDI2, UnusedDI3
+            from double_left import DL1, UnusedDL0, UnusedDL1, DL2, UnusedDL2, UnusedDL3
+            from double_right import UnusedDR0, UnusedDR1, DR1, UnusedDR2, UnusedDR3, DR2
+            from double_outside import DO1, UnusedDO1, UnusedDO2, DO2
+            from double_mixed_out import DMO1, UnusedDMO1, UnusedDMO2, DMO2, UnusedDMO3, UnusedDMO4, DMO3
+            from double_mixed_in import UnusedDMI0, UnusedDMI1, DMI1, UnusedDMI2, UnusedDMI3, DMI2, UnusedDMI4, UnusedDMI5
+
+            [I1, I2, L1, L2, R1, R2, O1, O2, MO1, MO2, MO3, MI1, MI2]
+            [DI1, DI2, DL1, DL2, DR1, DR2, DO1, DO2, DMO1, DMO2, DMO3, DMI1, DMI2]
+            ''',
+            '''
+            from inside import I1, I2
+            from left import L1, L2
+            from right import R1, R2
+            from outside import O1, O2
+            from mixed_out import MO1, MO2, MO3
+            from mixed_in import MI1, MI2
+
+            from double_inside import DI1, DI2
+            from double_left import DL1, DL2
+            from double_right import DR1, DR2
+            from double_outside import DO1, DO2
+            from double_mixed_out import DMO1, DMO2, DMO3
+            from double_mixed_in import DMI1, DMI2
+
+            [I1, I2, L1, L2, R1, R2, O1, O2, MO1, MO2, MO3, MI1, MI2]
+            [DI1, DI2, DL1, DL2, DR1, DR2, DO1, DO2, DMO1, DMO2, DMO3, DMI1, DMI2]
             ''',
         )
 

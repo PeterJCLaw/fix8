@@ -200,6 +200,9 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
     ) -> List[Span]:
         spans_to_remove: List[Span] = []
 
+        last_comma_was_trailing = False
+        last_end_pos = (0, 0)
+
         for message in line_messages:
             last_part, import_as_name = get_part_to_remove(message, node)
             node_to_remove = get_node_to_remove(last_part, import_as_name, node)
@@ -207,18 +210,28 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
             start_pos = get_start_pos(node_to_remove)
             end_pos = node_to_remove.end_pos
 
+            comma_is_trailing = False
+
             # Look for commas to remove. We prefer to remove a preceding comma,
-            # though only if it's on the same line. If there isn't a preceding
-            # comma on the same line we remove any trailing comma.
+            # will pick up a trailing one if that's going to work better.
             prev_leaf = last_part.get_previous_leaf()
-            if on_same_line(prev_leaf, last_part) and prev_leaf.type == 'operator':
+            if (
+                # Check that the preceding comma is on the same line.
+                on_same_line(prev_leaf, last_part)
+                and prev_leaf.type == 'operator'
+                # Check that that preceding comma isn't already being removed.
+                and not (last_comma_was_trailing and start_pos <= last_end_pos)
+            ):
                 start_pos = get_start_pos(prev_leaf)
 
             else:
                 next_leaf = node_to_remove.get_next_leaf()
                 if next_leaf.type == 'operator':
                     end_pos = next_leaf.end_pos
+                    comma_is_trailing = True
 
+            last_comma_was_trailing = comma_is_trailing
+            last_end_pos = end_pos
             spans_to_remove.append((start_pos, end_pos))
 
         return spans_to_remove
