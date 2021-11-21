@@ -52,7 +52,7 @@ Span = Tuple[Position, Position]
 Fixer = Callable[[CodeLine], str]
 TFixer = TypeVar('TFixer', bound=Fixer)
 
-FIXERS = {}  # type: Dict[str, Fixer]
+FIXERS: Dict[str, Fixer] = {}
 
 
 def merge_overlapping_spans(spans: Sequence[Span]) -> List[Span]:
@@ -237,7 +237,7 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
 
         return spans_to_remove
 
-    spans_to_remove = []  # type: List[Span]
+    spans_to_remove: List[Span] = []
 
     for lineno, grouped in itertools.groupby(messages, lambda x: x.line):
         line_messages = list(grouped)
