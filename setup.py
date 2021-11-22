@@ -7,7 +7,7 @@ with open('README.md') as file:
 
 setup(
     name='fix8',
-    version='0.1.1',
+    version='0.1.2',
     url='https://github.com/PeterJCLaw/fix8',
     project_urls={
         'Documentation': 'https://github.com/PeterJCLaw/fix8/blob/master/READNE.md',
@@ -17,6 +17,7 @@ setup(
     description="Automatic fix for Python linting issues found by Flake8",
     long_description=long_description,
     long_description_content_type='text/markdown',
+    py_modules=['fix8'],
     entry_points={
         'console_scripts': ['fix8 = fix8:main'],
     },
