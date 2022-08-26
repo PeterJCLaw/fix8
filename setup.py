@@ -10,7 +10,7 @@ setup(
     version='0.1.2',
     url='https://github.com/PeterJCLaw/fix8',
     project_urls={
-        'Documentation': 'https://github.com/PeterJCLaw/fix8/blob/master/READNE.md',
+        'Documentation': 'https://github.com/PeterJCLaw/fix8/blob/master/README.md',
         'Code': 'https://github.com/PeterJCLaw/fix8',
         'Issue tracker': 'https://github.com/PeterJCLaw/fix8/issues',
     },
