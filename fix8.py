@@ -10,11 +10,14 @@ from pathlib import Path
 from typing import (
     Callable,
     Dict,
+    Iterable,
+    Iterator,
     List,
     NamedTuple,
     Optional,
     Sequence,
     Tuple,
+    TYPE_CHECKING,
     TypeVar,
     Union,
 )
@@ -25,6 +28,10 @@ from flake8.main.application import (  # type: ignore[import]
 )
 from flake8.style_guide import Decision  # type: ignore[import]
 from parso.python import tree
+
+if TYPE_CHECKING:
+    from typing_extensions import TypeGuard
+
 
 FIXER_REGEX = re.compile(r'^fix_([A-Z]\d{3})$')
 
@@ -195,7 +202,7 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
         name: tree.Name,
         import_as_name: Optional[str],
         node: Union[tree.ImportFrom, tree.ImportName],
-    ) -> parso.tree.NodeOrLeaf:
+    ) -> Union[parso.tree.BaseNode, parso.tree.Leaf]:
         assert name.parent is not None  # placate mypy
         if name.parent.parent == node:
             # We're removing something like `bar as spam` from
@@ -208,47 +215,56 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
         assert import_as_name, "Did not expect renamed import, but found one"
         return name.parent
 
+    def is_operator(node: parso.tree.NodeOrLeaf, char: str) -> 'TypeGuard[tree.Operator]':
+        return isinstance(node, tree.Operator) and node == char
+
+    def operators_to_remove(
+        elements: Iterable[parso.tree.NodeOrLeaf],
+    ) -> Iterator[tree.Operator]:
+        last_was_operator = True
+        for element in elements:
+            if not is_operator(element, ','):
+                last_was_operator = False
+                continue
+
+            if last_was_operator:
+                yield element
+
+            last_was_operator = True
+
     def get_parts_to_remove(
         line_messages: Sequence[ErrorDetail],
         node: Union[tree.ImportFrom, tree.ImportName],
     ) -> List[Span]:
-        spans_to_remove: List[Span] = []
+        nodes_to_remove = set(
+            get_node_to_remove(
+                *get_part_to_remove(message, node),
+                node,
+            )
+            for message in line_messages
+        )
 
-        last_comma_was_trailing = False
-        last_end_pos = (0, 0)
+        parent, = set(x.parent for x in nodes_to_remove)
+        assert parent is not None  # placate mypy
+        remaining_siblings = [x for x in parent.children if x not in nodes_to_remove]
 
-        for message in line_messages:
-            last_part, import_as_name = get_part_to_remove(message, node)
-            node_to_remove = get_node_to_remove(last_part, import_as_name, node)
+        nodes_to_remove.update(operators_to_remove(remaining_siblings))
 
-            start_pos = get_start_pos(node_to_remove)
-            end_pos = node_to_remove.end_pos
+        last_remaining_sibling, = itertools.islice(
+            (x for x in reversed(remaining_siblings) if x not in nodes_to_remove),
+            1,
+        )
 
-            comma_is_trailing = False
+        if (
+            is_operator(last_remaining_sibling, ',')
+            and not is_operator(node.children[-1], ')')
+        ):
+            nodes_to_remove.add(last_remaining_sibling)
 
-            # Look for commas to remove. We prefer to remove a preceding comma,
-            # will pick up a trailing one if that's going to work better.
-            prev_leaf = last_part.get_previous_leaf()
-            if (
-                # Check that the preceding comma is on the same line.
-                on_same_line(prev_leaf, last_part)
-                and prev_leaf.type == 'operator'
-                # Check that that preceding comma isn't already being removed.
-                and not (last_comma_was_trailing and start_pos <= last_end_pos)
-            ):
-                start_pos = get_start_pos(prev_leaf)
-
-            else:
-                next_leaf = node_to_remove.get_next_leaf()
-                if next_leaf.type == 'operator':
-                    end_pos = next_leaf.end_pos
-                    comma_is_trailing = True
-
-            last_comma_was_trailing = comma_is_trailing
-            last_end_pos = end_pos
-            spans_to_remove.append((start_pos, end_pos))
-
-        return spans_to_remove
+        return [
+            (get_start_pos(x), x.end_pos)
+            for x in nodes_to_remove
+        ]
 
     spans_to_remove: List[Span] = []
 

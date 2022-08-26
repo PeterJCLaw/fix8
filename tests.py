@@ -210,6 +210,30 @@ class TestFixesF401(BaseFixesTestCast):
             ''',
         )
 
+    def test_absolute_first_two_and_last_in_from_import(self) -> None:
+        self.assertFixes(
+            '''
+            from os.path import basename, absname, dirname, realpath
+            dirname(__file__)
+            ''',
+            '''
+            from os.path import dirname
+            dirname(__file__)
+            ''',
+        )
+
+    def test_absolute_last_two_and_first_in_from_import(self) -> None:
+        self.assertFixes(
+            '''
+            from os.path import basename, dirname, absname, realpath
+            dirname(__file__)
+            ''',
+            '''
+            from os.path import dirname
+            dirname(__file__)
+            ''',
+        )
+
     def test_absolute_from_kitchen_sink(self) -> None:
         self.assertFixes(
             '''
