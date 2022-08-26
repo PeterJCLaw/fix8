@@ -14,7 +14,7 @@ class BaseFixesTestCast(unittest.TestCase):
         content: str,
         expected_output: str,
         *,
-        message: str = "Bad fixes"
+        message: str = "Bad fixes",
     ) -> None:
         # Normalise from triple quoted strings
         content = textwrap.dedent(content[1:])
