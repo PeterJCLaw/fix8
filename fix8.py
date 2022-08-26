@@ -344,7 +344,7 @@ def process_errors(messages: List[ErrorDetail], content: str) -> str:
     lines = content.splitlines()
     modified = False
 
-    for message in messages:
+    for message in sorted(messages, reverse=True):
         fixer_fn = FIXERS.get(message.code)
         if not fixer_fn:
             continue

@@ -40,6 +40,16 @@ class TestFixesC819(BaseFixesTestCast):
             ''',
         )
 
+    def test_removes_two_trailing_commas_same_line(self) -> None:
+        self.assertFixes(
+            '''
+            foo(bar, spam(quox,),)
+            ''',
+            '''
+            foo(bar, spam(quox))
+            ''',
+        )
+
 
 class TestFixesF401(BaseFixesTestCast):
     maxDiff = 8000
