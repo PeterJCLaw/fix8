@@ -44,6 +44,9 @@ class ErrorDetail(NamedTuple):
     code: str
     message: str
 
+    def render(self, filename: Path) -> str:
+        return f'{filename}:{self.line}:{self.col}: {self.code} {self.message}'
+
 
 class CodeLine(NamedTuple):
     text: str
@@ -390,6 +393,10 @@ def run(args: argparse.Namespace) -> None:
     all_error_details = run_flake8(args.flake8_args)
 
     for filepath, error_details in all_error_details.items():
+        if error_details[0].code == 'E999':
+            print(error_details[0].render(filepath))
+            continue
+
         with filepath.open(mode='r+') as f:
             content = f.read()
             new_content = process_errors(error_details, content)
