@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from typing_extensions import TypeGuard
 
 
-FIXER_REGEX = re.compile(r'^fix_([A-Z]\d{3})$')
+FIXER_REGEX = re.compile(r'^fix_([A-Z]{1,3}\d{3})$')
 
 FLAKE8_FORMAT = '%(path)s:%(row)d:%(col)d:%(code)s:%(text)s'
 
