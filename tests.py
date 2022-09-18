@@ -588,6 +588,25 @@ class TestFixesF401(BaseFixesTestCast):
             ''',
         )
 
+    def test_does_not_remove_blank_lines_in_imports(self) -> None:
+        self.assertFixes(
+            '''
+            import sys
+            import os.path
+
+            from . import func
+
+            func(file=sys.stderr)
+            ''',
+            '''
+            import sys
+
+            from . import func
+
+            func(file=sys.stderr)
+            ''',
+        )
+
 
 class TestFixesLBL001(BaseFixesTestCast):
     def test_removes_leading_newline(self) -> None:

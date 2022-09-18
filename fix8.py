@@ -321,12 +321,12 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
 
         interim = [] if line.isspace() else [line]
 
-        if not interim:
-            # We're removing a line. If the line after is also empty, then we
-            # also want to remove those lines to avoid creating empty lines at
-            # the start of the file. This is a specific targetted fix rather
-            # than a general attempt at formatting imports (we leave that to
-            # e.g: `isort`).
+        if not interim and not before:
+            # We're removing a line at the start of the file. If the line after
+            # is also empty, then we also want to remove those lines to avoid
+            # creating empty lines at the start of the file. This is a specific
+            # targetted fix rather than a general attempt at formatting imports
+            # (we leave that to e.g: `isort`).
             if after and after[0].isspace():
                 after.pop(0)
 
