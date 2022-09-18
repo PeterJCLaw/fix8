@@ -59,10 +59,10 @@ Span = Tuple[Position, Position]
 
 # TODO: currently we return the new string, we should move to instead returning
 # a description of the edit.
-Fixer = Callable[[CodeLine], str]
-TFixer = TypeVar('TFixer', bound=Fixer)
+LineFixer = Callable[[CodeLine], str]
+TLineFixer = TypeVar('TLineFixer', bound=LineFixer)
 
-FIXERS: Dict[str, Fixer] = {}
+LINE_FIXERS: Dict[str, LineFixer] = {}
 
 
 def merge_overlapping_spans(spans: Sequence[Span]) -> List[Span]:
@@ -96,43 +96,43 @@ def remove_character_at(text: str, col: int, char: str) -> str:
     return text[:col] + text[col + 1:]
 
 
-def fixer(fn: TFixer) -> TFixer:
+def line_fixer(fn: TLineFixer) -> TLineFixer:
     match = FIXER_REGEX.match(fn.__name__)
     if match is None:
         raise ValueError(
-            "Fixer has invalid name, should be of the form 'fix_X123' but was "
+            "LineFixer has invalid name, should be of the form 'fix_X123' but was "
             "{!r}".format(fn.__name__),
         )
-    FIXERS[match.group(1)] = fn
+    LINE_FIXERS[match.group(1)] = fn
     return fn
 
 
-@fixer  # Missing trailing comma
+@line_fixer  # Missing trailing comma
 def fix_C812(code_line: CodeLine) -> str:
     return insert_character_at(code_line.text, code_line.col, ',')
 
 
-@fixer  # Missing trailing comma
+@line_fixer  # Missing trailing comma
 def fix_C813(code_line: CodeLine) -> str:
     return insert_character_at(code_line.text, code_line.col, ',')
 
 
-@fixer  # Missing trailing comma
+@line_fixer  # Missing trailing comma
 def fix_C814(code_line: CodeLine) -> str:
     return insert_character_at(code_line.text, code_line.col, ',')
 
 
-@fixer  # Missing trailing comma
+@line_fixer  # Missing trailing comma
 def fix_C815(code_line: CodeLine) -> str:
     return insert_character_at(code_line.text, code_line.col, ',')
 
 
-@fixer  # Missing trailing comma
+@line_fixer  # Missing trailing comma
 def fix_C816(code_line: CodeLine) -> str:
     return insert_character_at(code_line.text, code_line.col, ',')
 
 
-@fixer  # Trailing comma prohibited
+@line_fixer  # Trailing comma prohibited
 def fix_C819(code_line: CodeLine) -> str:
     # flake8-commas seems to give the wrong column position, so -1
     return remove_character_at(code_line.text, code_line.col - 1, ',')
@@ -343,7 +343,7 @@ def run_flake8(args: List[str]) -> Dict[Path, List[ErrorDetail]]:
         decider = flake8.guide.decider
         flake8.options.select = [
             code
-            for code in FIXERS.keys()
+            for code in LINE_FIXERS.keys()
             if decider.decision_for(code) == Decision.Selected
         ]
         flake8.run_checks()
@@ -364,14 +364,14 @@ def process_errors(messages: List[ErrorDetail], content: str) -> str:
     modified = False
 
     for message in sorted(messages, reverse=True):
-        fixer_fn = FIXERS.get(message.code)
-        if not fixer_fn:
+        line_fixer_fn = LINE_FIXERS.get(message.code)
+        if not line_fixer_fn:
             continue
 
         # Convert to 0-based
         lineno = message.line - 1
 
-        new_line = fixer_fn(CodeLine(lines[lineno], lineno, message.col))
+        new_line = line_fixer_fn(CodeLine(lines[lineno], lineno, message.col))
         if new_line == lines[lineno]:
             continue
 
