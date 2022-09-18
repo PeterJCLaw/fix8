@@ -7,7 +7,7 @@ with open('README.md') as file:
 
 setup(
     name='fix8',
-    version='0.1.4',
+    version='0.1.5',
     url='https://github.com/PeterJCLaw/fix8',
     project_urls={
         'Documentation': 'https://github.com/PeterJCLaw/fix8/blob/master/README.md',
