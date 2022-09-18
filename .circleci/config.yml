@@ -31,7 +31,7 @@ references:
   restore-dependencies-cache: &restore-dependencies-cache
     restore_cache:
       keys:
-        - deps-1-py<< parameters.version >>-{{ checksum ".checksum" }}
+        - deps-2-py<< parameters.version >>-{{ checksum ".checksum" }}
   install-dependencies: &install-dependencies
     run:
       name: Install Dependencies
@@ -41,7 +41,7 @@ references:
         venv/bin/pip install -r all-requirements.txt
   save-dependencies-cache: &save-dependencies-cache
     save_cache:
-      key: deps-1-py<< parameters.version >>-{{ checksum ".checksum" }}
+      key: deps-2-py<< parameters.version >>-{{ checksum ".checksum" }}
       paths:
         - venv
   parametrised-python-executor: &parametrised-python-executor
@@ -73,7 +73,7 @@ executors:
       version:
         type: string
     docker:
-      - image: circleci/python:<< parameters.version >>
+      - image: cimg/python:<< parameters.version >>
 
 jobs:
   test:
@@ -131,7 +131,7 @@ jobs:
 
   release:
     docker:
-      - image: circleci/python:3.9
+      - image: cimg/python:3.9
     steps:
       - checkout
 
