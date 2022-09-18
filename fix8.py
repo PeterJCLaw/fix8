@@ -62,7 +62,11 @@ Span = Tuple[Position, Position]
 LineFixer = Callable[[CodeLine], str]
 TLineFixer = TypeVar('TLineFixer', bound=LineFixer)
 
+FileFixer = Callable[[Sequence[ErrorDetail], str], str]
+TFileFixer = TypeVar('TFileFixer', bound=FileFixer)
+
 LINE_FIXERS: Dict[str, LineFixer] = {}
+FILE_FIXERS: Dict[str, FileFixer] = {}
 
 
 def merge_overlapping_spans(spans: Sequence[Span]) -> List[Span]:
@@ -107,6 +111,17 @@ def line_fixer(fn: TLineFixer) -> TLineFixer:
     return fn
 
 
+def file_fixer(fn: TFileFixer) -> TFileFixer:
+    match = FIXER_REGEX.match(fn.__name__)
+    if match is None:
+        raise ValueError(
+            "LineFixer has invalid name, should be of the form 'fix_X123' but was "
+            "{!r}".format(fn.__name__),
+        )
+    FILE_FIXERS[match.group(1)] = fn
+    return fn
+
+
 @line_fixer  # Missing trailing comma
 def fix_C812(code_line: CodeLine) -> str:
     return insert_character_at(code_line.text, code_line.col, ',')
@@ -138,6 +153,7 @@ def fix_C819(code_line: CodeLine) -> str:
     return remove_character_at(code_line.text, code_line.col - 1, ',')
 
 
+@file_fixer
 def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
     module = parso.parse(content).get_root_node()
 
@@ -381,10 +397,10 @@ def process_errors(messages: List[ErrorDetail], content: str) -> str:
     if modified:
         content = ''.join(x.rstrip() + '\n' for x in lines)
 
-    # TODO: generalise support for other whole-file fixes
-    f401_messages = [x for x in messages if x.code == 'F401']
-    if f401_messages:
-        content = fix_F401(f401_messages, content)
+    for code, fixer_fn in FILE_FIXERS.items():
+        relevant_messages = [x for x in messages if x.code == code]
+        if relevant_messages:
+            content = fixer_fn(relevant_messages, content)
 
     return content
 
