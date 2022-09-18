@@ -572,6 +572,22 @@ class TestFixesF401(BaseFixesTestCast):
             ''',
         )
 
+    def test_does_not_create_leading_blank_lines(self) -> None:
+        self.assertFixes(
+            '''
+            import sys
+
+            from . import func
+
+            func()
+            ''',
+            '''
+            from . import func
+
+            func()
+            ''',
+        )
+
 
 class TestFixesLBL001(BaseFixesTestCast):
     def test_removes_leading_newline(self) -> None:
