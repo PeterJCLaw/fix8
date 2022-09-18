@@ -5,6 +5,7 @@ flake8-commas
 flake8-comprehensions
 flake8-debugger
 flake8-isort
+flake8-leading-blank-lines
 flake8-mutable
 flake8-todo
 flake8-tuple

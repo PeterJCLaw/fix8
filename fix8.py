@@ -326,6 +326,11 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
     return ''.join(lines)
 
 
+@file_fixer
+def fix_LBL001(messages: Sequence[ErrorDetail], content: str) -> str:
+    return content.lstrip('\n')
+
+
 def parse_flake8_output(flake8_output: str) -> Dict[Path, List[ErrorDetail]]:
     """
     Parse output from Flake8 formatted using FLAKE8_FORMAT into a useful form.

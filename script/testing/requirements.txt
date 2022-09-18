@@ -1,2 +1,3 @@
 # Linters we support fixing
 flake8-commas
+flake8-leading-blank-lines

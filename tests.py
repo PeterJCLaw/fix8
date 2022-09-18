@@ -573,6 +573,31 @@ class TestFixesF401(BaseFixesTestCast):
         )
 
 
+class TestFixesLBL001(BaseFixesTestCast):
+    def test_removes_leading_newline(self) -> None:
+        self.assertFixes(
+            '''
+
+            foo(bar)
+            ''',
+            '''
+            foo(bar)
+            ''',
+        )
+
+    def test_removes_several_leading_newlines(self) -> None:
+        self.assertFixes(
+            '''
+
+
+            foo(bar)
+            ''',
+            '''
+            foo(bar)
+            ''',
+        )
+
+
 class TestMergeSpans(unittest.TestCase):
     def test_separate(self) -> None:
         spans = [
