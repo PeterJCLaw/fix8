@@ -608,6 +608,113 @@ class TestFixesF401(BaseFixesTestCast):
         )
 
 
+class TestFixesFA100(BaseFixesTestCast):
+    def test_no_header(self) -> None:
+        self.assertFixes(
+            '''
+            from typing import Dict
+            x: Dict
+            ''',
+            '''
+            from __future__ import annotations
+
+            from typing import Dict
+            x: Dict
+            ''',
+        )
+
+    def test_comments(self) -> None:
+        self.assertFixes(
+            '''
+            # module comment
+
+            from typing import Dict
+            x: Dict
+            ''',
+            '''
+            # module comment
+
+            from __future__ import annotations
+
+            from typing import Dict
+            x: Dict
+            ''',
+        )
+
+    def test_comments_and_docstring(self) -> None:
+        self.assertFixes(
+            '''
+            # module comment
+
+            "module docstring"
+
+            from typing import Dict
+            x: Dict
+            ''',
+            '''
+            # module comment
+
+            "module docstring"
+
+            from __future__ import annotations
+
+            from typing import Dict
+            x: Dict
+            ''',
+        )
+
+    def test_single_quoted_docstring(self) -> None:
+        self.assertFixes(
+            '''
+            "module docstring"
+
+            from typing import Dict
+            x: Dict
+            ''',
+            '''
+            "module docstring"
+
+            from __future__ import annotations
+
+            from typing import Dict
+            x: Dict
+            ''',
+        )
+
+    def test_triple_quoted_docstring(self) -> None:
+        self.assertFixes(
+            '''
+            """module docstring"""
+            from typing import Dict
+            x: Dict
+            ''',
+            '''
+            """module docstring"""
+
+            from __future__ import annotations
+
+            from typing import Dict
+            x: Dict
+            ''',
+        )
+
+    def test_other_statement(self) -> None:
+        self.assertFixes(
+            '''
+            print(42)
+            from typing import Dict
+            x: Dict
+            ''',
+            '''
+            from __future__ import annotations
+
+            print(42)
+            from typing import Dict
+            x: Dict
+            ''',
+        )
+
+
 class TestFixesLBL001(BaseFixesTestCast):
     def test_removes_leading_newline(self) -> None:
         self.assertFixes(
