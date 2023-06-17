@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from __future__ import annotations
+
 import argparse
 import contextlib
 import io
@@ -9,17 +11,13 @@ import sys
 from pathlib import Path
 from typing import (
     Callable,
-    Dict,
     Iterable,
     Iterator,
-    List,
     NamedTuple,
-    Optional,
     Sequence,
     Tuple,
     TYPE_CHECKING,
     TypeVar,
-    Union,
 )
 
 import parso
@@ -65,11 +63,11 @@ TLineFixer = TypeVar('TLineFixer', bound=LineFixer)
 FileFixer = Callable[[Sequence[ErrorDetail], str], str]
 TFileFixer = TypeVar('TFileFixer', bound=FileFixer)
 
-LINE_FIXERS: Dict[str, LineFixer] = {}
-FILE_FIXERS: Dict[str, FileFixer] = {}
+LINE_FIXERS: dict[str, LineFixer] = {}
+FILE_FIXERS: dict[str, FileFixer] = {}
 
 
-def merge_overlapping_spans(spans: Sequence[Span]) -> List[Span]:
+def merge_overlapping_spans(spans: Sequence[Span]) -> list[Span]:
     if not spans:
         return []
 
@@ -164,10 +162,10 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
         return leaf.start_pos  # type: ignore[no-any-return]
 
     def find_path(
-        node: Union[tree.ImportFrom, tree.ImportName],
-        import_name: List[str],
-        import_as_name: Optional[str],
-    ) -> List[tree.Name]:
+        node: tree.ImportFrom | tree.ImportName,
+        import_name: list[str],
+        import_as_name: str | None,
+    ) -> list[tree.Name]:
         for path, as_name in zip(node.get_paths(), node.get_defined_names()):
             if import_as_name is None:
                 # Not expecting a rename
@@ -186,7 +184,7 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
             ):
                 return path  # type: ignore[no-any-return]
 
-        raise ValueError("Failed to find matching path for {}".format(import_name))
+        raise ValueError(f"Failed to find matching path for {import_name}")
 
     def on_same_line(a: parso.tree.NodeOrLeaf, b: parso.tree.NodeOrLeaf) -> bool:
         return a.start_pos[0] == b.start_pos[0]
@@ -195,8 +193,8 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
 
     def get_part_to_remove(
         detail: ErrorDetail,
-        node: Union[tree.ImportFrom, tree.ImportName],
-    ) -> Tuple[tree.Name, str]:
+        node: tree.ImportFrom | tree.ImportName,
+    ) -> tuple[tree.Name, str]:
         match = message_regex.search(detail.message)
         if match is None:
             raise ValueError("Unable to extract import name from message {!r}".format(
@@ -219,9 +217,9 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
 
     def get_node_to_remove(
         name: tree.Name,
-        import_as_name: Optional[str],
-        node: Union[tree.ImportFrom, tree.ImportName],
-    ) -> Union[parso.tree.BaseNode, parso.tree.Leaf]:
+        import_as_name: str | None,
+        node: tree.ImportFrom | tree.ImportName,
+    ) -> parso.tree.BaseNode | parso.tree.Leaf:
         assert name.parent is not None  # placate mypy
         if name.parent.parent == node:
             # We're removing something like `bar as spam` from
@@ -234,7 +232,7 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
         assert import_as_name, "Did not expect renamed import, but found one"
         return name.parent
 
-    def is_operator(node: parso.tree.NodeOrLeaf, char: str) -> 'TypeGuard[tree.Operator]':
+    def is_operator(node: parso.tree.NodeOrLeaf, char: str) -> TypeGuard[tree.Operator]:
         return isinstance(node, tree.Operator) and node == char
 
     def operators_to_remove(
@@ -253,8 +251,8 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
 
     def get_parts_to_remove(
         line_messages: Sequence[ErrorDetail],
-        node: Union[tree.ImportFrom, tree.ImportName],
-    ) -> List[Span]:
+        node: tree.ImportFrom | tree.ImportName,
+    ) -> list[Span]:
         nodes_to_remove = set(
             get_node_to_remove(
                 *get_part_to_remove(message, node),
@@ -285,7 +283,7 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
             for x in nodes_to_remove
         ]
 
-    spans_to_remove: List[Span] = []
+    spans_to_remove: list[Span] = []
 
     for lineno, grouped in itertools.groupby(messages, lambda x: x.line):
         line_messages = list(grouped)
@@ -340,7 +338,7 @@ def fix_LBL001(messages: Sequence[ErrorDetail], content: str) -> str:
     return content.lstrip('\n')
 
 
-def parse_flake8_output(flake8_output: str) -> Dict[Path, List[ErrorDetail]]:
+def parse_flake8_output(flake8_output: str) -> dict[Path, list[ErrorDetail]]:
     """
     Parse output from Flake8 formatted using FLAKE8_FORMAT into a useful form.
     """
@@ -361,7 +359,7 @@ def parse_flake8_output(flake8_output: str) -> Dict[Path, List[ErrorDetail]]:
     return error_details
 
 
-def run_flake8(args: List[str]) -> Dict[Path, List[ErrorDetail]]:
+def run_flake8(args: list[str]) -> dict[Path, list[ErrorDetail]]:
     # Flake8 v4 assumes stdout is a buffered output and sometimes writes
     # directly to the buffer.
     buffer = io.BytesIO()
@@ -389,7 +387,7 @@ def run_flake8(args: List[str]) -> Dict[Path, List[ErrorDetail]]:
     return parse_flake8_output(output)
 
 
-def process_errors(messages: List[ErrorDetail], content: str) -> str:
+def process_errors(messages: list[ErrorDetail], content: str) -> str:
     lines = content.splitlines()
     modified = False
 
@@ -432,19 +430,19 @@ def run(args: argparse.Namespace) -> None:
             new_content = process_errors(error_details, content)
 
             if new_content != content:
-                print("Fixing {}".format(filepath))
+                print(f"Fixing {filepath}")
                 f.seek(0)
                 f.write(new_content)
                 f.truncate()
 
 
-def parse_args(argv: List[str]) -> argparse.Namespace:
+def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('flake8_args', metavar='FLAKE8_ARG', nargs='*')
     return parser.parse_args(argv)
 
 
-def main(argv: List[str] = sys.argv[1:]) -> None:
+def main(argv: list[str] = sys.argv[1:]) -> None:
     return run(parse_args(argv))
 
 
