@@ -8,6 +8,9 @@ import io
 import itertools
 import re
 import sys
+import token
+import tokenize
+from collections.abc import Collection
 from pathlib import Path
 from typing import (
     Callable,
@@ -329,6 +332,34 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
                 after.pop(0)
 
         lines = before + interim + after
+
+    return ''.join(lines)
+
+
+@file_fixer
+def fix_FA100(messages: Sequence[ErrorDetail], content: str) -> str:
+    tokens = tokenize.generate_tokens(io.StringIO(content).readline)
+
+    skip_types: Collection[int] = (token.COMMENT, token.NL, token.NEWLINE, token.STRING)
+    for tok in tokens:
+        if tok.type in skip_types:
+            if tok.type == token.STRING:
+                # Only the first string is a docstring
+                skip_types = tuple(x for x in skip_types if x != token.STRING)
+
+            continue
+        break
+
+    lineno, _ = tok.start
+    lineno -= 1  # convert to 0-indexed
+
+    lines = content.splitlines(keepends=True)
+
+    text = 'from __future__ import annotations\n\n'
+    if lineno > 0 and lines[lineno - 1].strip():
+        text = '\n' + text
+
+    lines.insert(lineno, text)
 
     return ''.join(lines)
 

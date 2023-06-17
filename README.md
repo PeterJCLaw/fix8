@@ -9,6 +9,7 @@ Automatic fix for Python linting issues found by [Flake8](https://flake8.pycqa.o
 * `F401`: Unused imports are removed. (If doing so would create a blank line at
   the start of the file then the next line is also removed).
 * `C812`, `C813`, `C814`, `C815`, `C816`: Trailing commas are added
+* `FA100`: Future annotation imports are added.
 * `LBL001`: Leading blank lines are removed.
 
 ## Install
