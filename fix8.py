@@ -55,6 +55,11 @@ class CodeLine(NamedTuple):
     col: int
 
 
+class FixResult(NamedTuple):
+    new_content: str
+    fixed: list[ErrorDetail]
+
+
 Position = Tuple[int, int]
 Span = Tuple[Position, Position]
 
@@ -418,7 +423,7 @@ def run_flake8(args: list[str]) -> dict[Path, list[ErrorDetail]]:
     return parse_flake8_output(output)
 
 
-def process_errors(messages: list[ErrorDetail], content: str) -> str:
+def process_errors(messages: list[ErrorDetail], content: str) -> FixResult:
     lines = content.splitlines()
     modified = False
 
@@ -440,12 +445,15 @@ def process_errors(messages: list[ErrorDetail], content: str) -> str:
     if modified:
         content = ''.join(x.rstrip() + '\n' for x in lines)
 
+    fixed: list[ErrorDetail] = []
+
     for code, fixer_fn in FILE_FIXERS.items():
         relevant_messages = [x for x in messages if x.code == code]
         if relevant_messages:
             content = fixer_fn(relevant_messages, content)
+            fixed += relevant_messages
 
-    return content
+    return FixResult(content, fixed)
 
 
 def run(args: argparse.Namespace) -> None:
@@ -458,7 +466,12 @@ def run(args: argparse.Namespace) -> None:
 
         with filepath.open(mode='r+') as f:
             content = f.read()
-            new_content = process_errors(error_details, content)
+            new_content, fixed_errors = process_errors(error_details, content)
+
+            fixed_set = set(fixed_errors)
+
+            if args.verbose:
+                print('--')
 
             if new_content != content:
                 print(f"Fixing {filepath}")
@@ -466,9 +479,22 @@ def run(args: argparse.Namespace) -> None:
                 f.write(new_content)
                 f.truncate()
 
+            if args.verbose:
+                remaining = [x for x in error_details if x not in fixed_set]
+                fixed = [x for x in error_details if x in fixed_set]
+                if remaining:
+                    print("Remaining:")
+                    for detail in remaining:
+                        print(" ", detail.render(filepath))
+                if fixed:
+                    print("Fixed:")
+                    for detail in fixed:
+                        print(" ", detail.render(filepath))
+
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
+    parser.add_argument('--verbose', action='store_true')
     parser.add_argument('flake8_args', metavar='FLAKE8_ARG', nargs='*')
     return parser.parse_args(argv)
 

@@ -24,7 +24,7 @@ class BaseFixesTestCast(unittest.TestCase):
             parsed_errors = fix8.run_flake8(['-'])
 
         error_details = parsed_errors[Path('stdin')]
-        new_content = fix8.process_errors(error_details, content)
+        new_content, _ = fix8.process_errors(error_details, content)
 
         self.assertEqual(expected_output, new_content, message)
 
