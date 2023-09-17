@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from setuptools import setup  # type: ignore[import]
+from setuptools import setup
 
 with open('README.md') as file:
     long_description = file.read()
