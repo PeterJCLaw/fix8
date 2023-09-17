@@ -165,7 +165,7 @@ def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
 
     def get_start_pos(node_or_leaf: parso.tree.NodeOrLeaf) -> Position:
         leaf = node_or_leaf.get_first_leaf()
-        if leaf.prefix.isspace():
+        if leaf.prefix.isspace() and not leaf.prefix == '\n':
             return leaf.get_start_pos_of_prefix()  # type: ignore[no-any-return]
         return leaf.start_pos  # type: ignore[no-any-return]
 

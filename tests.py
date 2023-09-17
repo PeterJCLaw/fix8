@@ -607,6 +607,29 @@ class TestFixesF401(BaseFixesTestCast):
             ''',
         )
 
+    def test_does_not_remove_blank_lines_after_docstrings(self) -> None:
+        self.assertFixes(
+            '''
+            """docstring"""
+
+            import sys
+            import os.path
+
+            from . import func
+
+            func(os.path.join('foo', 'bar'))
+            ''',
+            '''
+            """docstring"""
+
+            import os.path
+
+            from . import func
+
+            func(os.path.join('foo', 'bar'))
+            ''',
+        )
+
 
 class TestFixesFA100(BaseFixesTestCast):
     def test_no_header(self) -> None:
