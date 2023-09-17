@@ -163,9 +163,24 @@ def fix_C819(code_line: CodeLine) -> str:
 def fix_F401(messages: Sequence[ErrorDetail], content: str) -> str:
     module = parso.parse(content).get_root_node()
 
+    def _next_sibling_has_space(leaf: parso.tree.NodeOrLeaf) -> bool:
+        next_leaf = leaf.get_next_leaf()
+        while isinstance(next_leaf, tree.Operator):
+            next_leaf = next_leaf.get_next_leaf()
+        return (
+            # leaves on another line inherently have all the space they need.
+            next_leaf.start_pos[0] > leaf.start_pos[0]
+            or next_leaf.prefix.isspace()
+            or isinstance(next_leaf, tree.Newline)
+        )
+
     def get_start_pos(node_or_leaf: parso.tree.NodeOrLeaf) -> Position:
         leaf = node_or_leaf.get_first_leaf()
-        if leaf.prefix.isspace() and not leaf.prefix == '\n':
+        if (
+            leaf.prefix.isspace()
+            and not leaf.prefix == '\n'
+            and _next_sibling_has_space(node_or_leaf)
+        ):
             return leaf.get_start_pos_of_prefix()  # type: ignore[no-any-return]
         return leaf.start_pos  # type: ignore[no-any-return]
 

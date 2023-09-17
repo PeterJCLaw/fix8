@@ -630,6 +630,34 @@ class TestFixesF401(BaseFixesTestCast):
             ''',
         )
 
+    def test_import_without_spaces_before(self) -> None:
+        self.assertFixes(
+            '''
+            import os,contextlib
+
+            contextlib
+            ''',
+            '''
+            import contextlib
+
+            contextlib
+            ''',
+        )
+
+    def test_import_without_spaces_after(self) -> None:
+        self.assertFixes(
+            '''
+            import contextlib,os
+
+            contextlib
+            ''',
+            '''
+            import contextlib
+
+            contextlib
+            ''',
+        )
+
 
 class TestFixesFA100(BaseFixesTestCast):
     def test_no_header(self) -> None:
